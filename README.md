@@ -4,6 +4,7 @@
 
 ```
 rosdep install obstacle_avoidance
+catkin build obstacle_avoidance
 ```
 
 ### 実行
