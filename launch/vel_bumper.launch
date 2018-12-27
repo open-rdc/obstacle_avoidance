@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="obstacle_avoidance" name="vel_bumper" type="vel_bumper.py" output="screen"/>
+</launch>
+

@@ -60,6 +60,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>turtlebot_gazebo</exec_depend>
   <exec_depend>turtlebot_rviz_launchers</exec_depend>
+  <exec_depend>timed_roslaunch</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
