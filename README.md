@@ -3,21 +3,14 @@
 ### インストール
 
 ```
-sudo apt-get install ros-kinetic-turtlebot-gazebo
-sudo apt-get install ros-kinetic-turtlebot-rviz-launchers
-```
-
-### 環境設定
-
-my_stage01.worldを/opt/ros/kinetic/share/turtlebot/worldsにコピーする
-```
-cp my_stage01.world /opt/ros/kinetic/share/turtlebot_gazebo/worlds
+rosdep install obstacle_avoidance
+catkin build obstacle_avoidance
 ```
 
 ### 実行
 
 ```
-export TURTLEBOT_GAZEBO_WORLD_FILE=/opt/ros/kinetic/share/turtlebot_gazebo/worlds/my_stage01.world
-roslaunch turtlebot_gazebo turtlebot_world.launch
-roslaunch turtlebot_rviz_launchers view_robot.launch
+roslaunch obstacle_avoidance obstacle_avoidance_sim.launch
 ```
+
+開発中なので，まだロボットしか出力されません．
