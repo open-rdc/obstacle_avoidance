@@ -18,8 +18,6 @@ cp my_stage01.world /opt/ros/kinetic/share/turtlebot_gazebo/worlds
 
 ```
 export TURTLEBOT_GAZEBO_WORLD_FILE=/opt/ros/kinetic/share/turtlebot_gazebo/worlds/my_stage01.world
-
 roslaunch turtlebot_gazebo turtlebot_world.launch
-
 roslaunch turtlebot_rviz_launchers view_robot.launch
 ```
