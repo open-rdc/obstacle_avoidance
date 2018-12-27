@@ -9,6 +9,7 @@ sudo apt-get install ros-kinetic-turtlebot-rviz-launchers
 
 ### 環境設定
 
+my_stage01.worldを/opt/ros/kinetic/share/turtlebot/worldsにコピーする
 ```
 cp my_stage01.world /opt/ros/kinetic/share/turtlebot_gazebo/worlds
 ```
