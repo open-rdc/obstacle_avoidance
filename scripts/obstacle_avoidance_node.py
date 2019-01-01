@@ -27,7 +27,7 @@ class obstacle_avoidance_node:
 		self.bridge = CvBridge()
 		self.image_sub = rospy.Subscriber("/camera/depth/image_raw", Image, self.callback)
 #		self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
-		self.reward_sub = rospy.Subscriber("/reward", Float32, self.callback_reward)
+#		self.reward_sub = rospy.Subscriber("/reward", Float32, self.callback_reward)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.action = 0
 		self.reward = 0
@@ -52,20 +52,25 @@ class obstacle_avoidance_node:
 		except CvBridgeError as e:
 			print(e)
 
-		temp = copy.deepcopy(self.cv_image)
-		cv2.imshow("Capture Image", temp)
-		cv2.waitKey(1)
-		
+#		temp = copy.deepcopy(self.cv_image)
+#		cv2.imshow("Capture Image", temp)
+#		cv2.waitKey(1)
+
+
 #	def callback_bumper(self, bumper)
 #		self.action = self.rl.stop_episode_and_train(imgobj, self.reward, self.done)
 #		rospy.wait_for_service('/gazebo/reset_world')
 #		reset_world = rospy.ServiceProxy('/gazebo/reset_world',Empty)
 
-	def callback_reward(self, reward):
-		self.reward = reward.data
-		img = resize(self.cv_image, (24, 32), mode='constant')
-		b, g, r = cv2.split(img)
-		imgobj = np.asanyarray([b])
+	def loop(self):
+		print(self.cv_image.size)
+		if self.cv_image.size != 640 * 480:
+			return
+
+		self.reward = 1
+		img = resize(self.cv_image, (48, 64), mode='constant')
+		print(img)
+		imgobj = np.asanyarray([img])
 
 		self.learning = True
 
@@ -91,11 +96,14 @@ class obstacle_avoidance_node:
 		self.action_pub.publish(self.action)
 
 		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(self.reward,5)))
+		temp = copy.deepcopy(img)
+		cv2.imshow("Resized Image", temp)
+		cv2.waitKey(1)
 
 if __name__ == '__main__':
 	rg = obstacle_avoidance_node()
-	try:
-		rospy.spin()
-	except KeyboardInterrupt:
-		print("Shutting Down")
-		cv2.destroyAllWindows()
+	DURATION = 1.0
+	r = rospy.Rate(1 / DURATION)
+	while not rospy.is_shutdown():
+		rg.loop()
+		r.sleep()

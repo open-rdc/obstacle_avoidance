@@ -31,7 +31,7 @@ class QFunction(chainer.Chain):
 		return h
 
 class reinforcement_learning:
-	def __init__(self, n_history=3, n_action=4):
+	def __init__(self, n_history=1, n_action=4):
 		self.q_func = QFunction(n_history, n_action)
 		try:
 			self.q_func.to_gpu()
