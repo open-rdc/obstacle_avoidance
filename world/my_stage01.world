@@ -533,6 +533,7 @@
       </link>
       <pose frame=''>21.0924 -3.31102 0 0 -0 0</pose>
     </model>
+<!--
     <model name='grey_wall_11'>
       <static>1</static>
       <link name='link'>
@@ -578,6 +579,7 @@
       </link>
       <pose frame=''>30.4919 -0.932517 0 0 -0 0</pose>
     </model>
+-->
     <state world_name='default'>
       <sim_time>3203 408000000</sim_time>
       <real_time>464 467007372</real_time>
@@ -613,6 +615,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
+<!--
       <model name='grey_wall_11'>
         <pose frame=''>28.1012 -0.040957 0 0 -0 1.57628</pose>
         <scale>1 1 1</scale>
@@ -623,6 +626,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
+-->
       <model name='grey_wall_4'>
         <pose frame=''>9.23902 3.60144 0 0 -0 0</pose>
         <scale>1 1 1</scale>

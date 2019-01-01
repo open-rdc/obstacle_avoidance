@@ -11,12 +11,16 @@ from reinforcement_learning import *
 from skimage.transform import resize
 from std_msgs.msg import Float32, Int8
 from std_srvs.srv import Empty
+from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.srv import GetModelState
+from gazebo_msgs.msg import ModelState
 import sys
 import skimage.transform
 import csv
 import os
 import time
 import copy
+import random
 
 class obstacle_avoidance_node:
 	def __init__(self):
@@ -26,8 +30,7 @@ class obstacle_avoidance_node:
 		self.rl = reinforcement_learning(n_action = self.action_num)
 		self.bridge = CvBridge()
 		self.image_sub = rospy.Subscriber("/camera/depth/image_raw", Image, self.callback)
-#		self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
-#		self.reward_sub = rospy.Subscriber("/reward", Float32, self.callback_reward)
+		self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.action = 0
 		self.reward = 0
@@ -36,7 +39,8 @@ class obstacle_avoidance_node:
 		self.learning = True
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
 		self.action_list = ['Front', 'Right', 'Left']
-		self.path = '~/result'
+		self.path = 'data/result'
+		self.previous_reset_time = 0
 		os.makedirs(self.path + self.start_time)
 
 		with open(self.path + self.start_time + '/' +  'reward.csv', 'w') as f:
@@ -52,42 +56,77 @@ class obstacle_avoidance_node:
 		except CvBridgeError as e:
 			print(e)
 
-#		temp = copy.deepcopy(self.cv_image)
-#		cv2.imshow("Capture Image", temp)
-#		cv2.waitKey(1)
+	def reset_simulation(self):
+		rospy.wait_for_service('/gazebo/set_model_state')
+		set_model_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+		model_state = ModelState()
+		model_state.model_name = 'mobile_base'
+		model_state.pose.position.x = 0
+		model_state.pose.position.y = 0
+		model_state.pose.position.z = 0
+		model_state.pose.orientation.x = 0
+		model_state.pose.orientation.y = 0
+		model_state.pose.orientation.z = random.random() - 0.5
+		model_state.pose.orientation.w = 1
+		model_state.twist.linear.x = 0
+		model_state.twist.linear.y = 0
+		model_state.twist.linear.z = 0
+		model_state.twist.angular.x = 0
+		model_state.twist.angular.y = 0
+		model_state.twist.angular.z = 0
+		model_state.reference_frame = 'world'
+		try:
+			set_model_state(model_state)
+		except rospy.ServiceException as exc:
+			print("Service did not process request: " + str(exc))
 
 
-#	def callback_bumper(self, bumper)
-#		self.action = self.rl.stop_episode_and_train(imgobj, self.reward, self.done)
-#		rospy.wait_for_service('/gazebo/reset_world')
-#		reset_world = rospy.ServiceProxy('/gazebo/reset_world',Empty)
+	def callback_bumper(self, bumper):
+		if rospy.get_time() - self.previous_reset_time < 1:
+			return
+		self.previous_reset_time = rospy.get_time()
+		print("!!!!!!! RESET !!!!!!!")
+
+		self.reset_simulation()
+		reward = -1
+		img = resize(self.cv_image, (48, 64), mode='constant')
+		imgobj = np.asanyarray([img])
+		self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
+		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
+
+		line = [str(rospy.Time.now()), str(reward), str(self.action)]
+		with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+			writer = csv.writer(f, lineterminator='\n')
+			writer.writerow(line)
 
 	def loop(self):
-		print(self.cv_image.size)
 		if self.cv_image.size != 640 * 480:
 			return
 
-		self.reward = 1
+		rospy.wait_for_service('/gazebo/get_model_state')
+		get_model_state = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+		try:
+			previous_model_state = get_model_state('mobile_base', 'world')
+		except rospy.ServiceException as exc:
+			print("Service did not process request: " + str(exc))
+			self.reset_simulation()
 		img = resize(self.cv_image, (48, 64), mode='constant')
-		print(img)
 		imgobj = np.asanyarray([img])
 
 		self.learning = True
 
 		ros_time = str(rospy.Time.now())
-		if self.learning:
-			self.count += 1
-			if self.count % 30 == 0:
-				self.done = True
-			if self.done:
-				self.action = self.rl.stop_episode_and_train(imgobj, self.reward, self.done)
-				self.done = False
-				print('Last step in this episode')
-			else:
-				self.action = self.rl.act_and_trains(imgobj, self.reward)
 
-			line = [ros_time, str(self.reward), str(self.action)]
-			with open(self.path + self.start_time + '/' +  'reward.csv', 'a') as f:
+		if self.learning:
+			if previous_model_state.pose.position.x < 25:
+				reward = 0
+				self.action = self.rl.act_and_trains(imgobj, reward)
+			else:
+				reward = 1
+				self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
+
+			line = [ros_time, str(reward), str(self.action)]
+			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 				writer = csv.writer(f, lineterminator='\n')
 				writer.writerow(line)
 
@@ -95,14 +134,14 @@ class obstacle_avoidance_node:
 			self.action = self.rl.act(imgobj)
 		self.action_pub.publish(self.action)
 
-		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(self.reward,5)))
+		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
 		temp = copy.deepcopy(img)
 		cv2.imshow("Resized Image", temp)
 		cv2.waitKey(1)
 
 if __name__ == '__main__':
 	rg = obstacle_avoidance_node()
-	DURATION = 1.0
+	DURATION = 0.1
 	r = rospy.Rate(1 / DURATION)
 	while not rospy.is_shutdown():
 		rg.loop()
