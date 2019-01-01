@@ -14,8 +14,6 @@ from std_srvs.srv import Empty
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import GetModelState
 from gazebo_msgs.msg import ModelState
-import sys
-import skimage.transform
 import csv
 import os
 import time
@@ -34,6 +32,7 @@ class obstacle_avoidance_node:
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.action = 0
 		self.reward = 0
+		self.episode = 0
 		self.cv_image = np.zeros((480,640,3), np.uint8)
 		self.count = 0
 		self.learning = True
@@ -41,12 +40,12 @@ class obstacle_avoidance_node:
 		self.action_list = ['Front', 'Right', 'Left']
 		self.path = 'data/result'
 		self.previous_reset_time = 0
+		self.start_time_s = rospy.get_time()
 		os.makedirs(self.path + self.start_time)
 
 		with open(self.path + self.start_time + '/' +  'reward.csv', 'w') as f:
 			writer = csv.writer(f, lineterminator='\n')
-			writer.writerow(['rostime', 'reward', 'action'])
-		self.done = False
+			writer.writerow(['epsode', 'time(s)', 'reward'])
 
 	def callback(self, data):
 		try:
@@ -94,7 +93,8 @@ class obstacle_avoidance_node:
 		self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
 		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
 
-		line = [str(rospy.Time.now()), str(reward), str(self.action)]
+		self.episode += 1
+		line = [str(self.episode), str(rospy.get_time() - self.start_time_s), str(reward)]
 		with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 			writer = csv.writer(f, lineterminator='\n')
 			writer.writerow(line)
@@ -109,7 +109,6 @@ class obstacle_avoidance_node:
 			previous_model_state = get_model_state('mobile_base', 'world')
 		except rospy.ServiceException as exc:
 			print("Service did not process request: " + str(exc))
-			self.reset_simulation()
 		img = resize(self.cv_image, (48, 64), mode='constant')
 		imgobj = np.asanyarray([img])
 
@@ -124,11 +123,12 @@ class obstacle_avoidance_node:
 			else:
 				reward = 1
 				self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
-
-			line = [ros_time, str(reward), str(self.action)]
-			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
-				writer = csv.writer(f, lineterminator='\n')
-				writer.writerow(line)
+				self.episode += 1
+				line = [str(self.episode), str(rospy.get_time() - self.start_time_s), str(reward)]
+				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+					writer = csv.writer(f, lineterminator='\n')
+					writer.writerow(line)
+				self.reset_simulation()
 
 		else:
 			self.action = self.rl.act(imgobj)
