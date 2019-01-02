@@ -586,30 +586,30 @@
       <wall_time>1545724477 145419802</wall_time>
       <iterations>463748</iterations>
       <model name='grey_wall'>
-        <pose frame=''>1.74277 3.59908 0 0 -0 0</pose>
+        <pose frame=''>1.74277 1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>1.74277 3.59908 1.4 0 -0 0</pose>
+          <pose frame=''>1.74277 1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='grey_wall_0'>
-        <pose frame=''>1.7816 -3.68174 0 0 -0 0</pose>
+        <pose frame=''>1.7816 -1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>1.7816 -3.68174 1.4 0 -0 0</pose>
+          <pose frame=''>1.7816 -1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='grey_wall_10'>
-        <pose frame=''>24.2783 -3.69182 0 0 -0 0</pose>
+        <pose frame=''>24.2783 -1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>24.2783 -3.69182 1.4 0 -0 0</pose>
+          <pose frame=''>24.2783 -1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -628,50 +628,50 @@
       </model>
 -->
       <model name='grey_wall_4'>
-        <pose frame=''>9.23902 3.60144 0 0 -0 0</pose>
+        <pose frame=''>9.23902 1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>9.23902 3.60144 1.4 0 -0 0</pose>
+          <pose frame=''>9.23902 1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='grey_wall_5'>
-        <pose frame=''>9.29035 -3.69084 0 0 -0 0</pose>
+        <pose frame=''>9.29035 -1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>9.29035 -3.69084 1.4 0 -0 0</pose>
+          <pose frame=''>9.29035 -1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='grey_wall_6'>
-        <pose frame=''>16.7372 3.60255 0 0 -0 0</pose>
+        <pose frame=''>16.7372 1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>16.7372 3.60255 1.4 0 -0 0</pose>
+          <pose frame=''>16.7372 1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='grey_wall_7'>
-        <pose frame=''>16.7822 -3.69163 0 0 -0 0</pose>
+        <pose frame=''>16.7822 -1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>16.7822 -3.69163 1.4 0 -0 0</pose>
+          <pose frame=''>16.7822 -1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='grey_wall_8'>
-        <pose frame=''>24.2326 3.60388 0 0 -0 0</pose>
+        <pose frame=''>24.2326 1.8 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>24.2326 3.60388 1.4 0 -0 0</pose>
+          <pose frame=''>24.2326 1.8 1.4 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
