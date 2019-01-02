@@ -10,7 +10,11 @@ catkin build obstacle_avoidance
 ### 実行
 
 ```
-roslaunch obstacle_avoidance obstacle_avoidance_sim.launch
+roslaunch obstacle_avoidance learning_sim.launch
 ```
 
-開発中なので，まだロボットしか出力されません．
+### データの閲覧
+
+```
+cd ~/.ros/data
+```
