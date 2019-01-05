@@ -85,8 +85,8 @@ class obstacle_avoidance_node:
 		self.previous_reset_time = rospy.get_time()
 		print("!!!!!!! RESET !!!!!!!")
 
-		self.reset_simulation()
-		reward = -1
+                self.reset_simulation()
+                reward = -1
 		img = resize(self.cv_image, (48, 64), mode='constant')
 		imgobj = np.asanyarray([img])
 		self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
@@ -116,13 +116,13 @@ class obstacle_avoidance_node:
 		ros_time = str(rospy.Time.now())
 
 		if self.learning:
-			if previous_model_state.pose.position.x < 5:
+			if previous_model_state.pose.position.x < 15:
 				reward = 0
 				self.action = self.rl.act_and_trains(imgobj, reward)
-			else if previous_model_state.pose.position.x < 15:
+			elif previous_model_state.pose.position.x < 25:
 				reward = 1
 				self.action = self.rl.act_and_trains(imgobj, reward)
-			else if previous_model_state.pose.position.x < 25:
+                        else:
 				reward = 2
 				self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
 				self.episode += 1
