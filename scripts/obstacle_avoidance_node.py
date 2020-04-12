@@ -85,18 +85,18 @@ class obstacle_avoidance_node:
 		self.previous_reset_time = rospy.get_time()
 		print("!!!!!!! RESET !!!!!!!")
 
-                self.reset_simulation()
-                reward = -1
+		self.reset_simulation()
+		reward = -1
 		img = resize(self.cv_image, (48, 64), mode='constant')
 		imgobj = np.asanyarray([img])
 		self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
-		print("learning = " + str(self.learning) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
+		print("learning = " + str(self.learning) + " episode: " + str(self.episode) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
 
-		self.episode += 1
 		line = [str(self.episode), str(rospy.get_time() - self.start_time_s), str(reward)]
 		with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 			writer = csv.writer(f, lineterminator='\n')
 			writer.writerow(line)
+		self.episode += 1
 
 	def loop(self):
 		if self.cv_image.size != 640 * 480:
@@ -116,21 +116,18 @@ class obstacle_avoidance_node:
 		ros_time = str(rospy.Time.now())
 
 		if self.learning:
-			if previous_model_state.pose.position.x < 15:
+			if previous_model_state.pose.position.x < 25:
 				reward = 0
 				self.action = self.rl.act_and_trains(imgobj, reward)
-			elif previous_model_state.pose.position.x < 25:
+			else:
 				reward = 1
-				self.action = self.rl.act_and_trains(imgobj, reward)
-                        else:
-				reward = 2
 				self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
-				self.episode += 1
 				line = [str(self.episode), str(rospy.get_time() - self.start_time_s), str(reward)]
 				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 					writer = csv.writer(f, lineterminator='\n')
 					writer.writerow(line)
 				self.reset_simulation()
+				self.episode += 1
 
 		else:
 			self.action = self.rl.act(imgobj)

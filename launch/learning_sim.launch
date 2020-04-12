@@ -3,7 +3,7 @@
     <!-- load gazebo -->
     <arg name = "render" default="true" />
     <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch" >
-        <arg name="world_file" value="'$(find obstacle_avoidance)/world/my_stage02.world'"/>
+        <arg name="world_file" value="'$(find obstacle_avoidance)/world/my_stage01.world'"/>
     </include>
 
 <!--
