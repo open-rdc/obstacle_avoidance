@@ -6,8 +6,9 @@ import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32, Int8
 
-linear_vel = 0.5
-angle_vel = 0.2
+linear_vel = 0.4
+# angle_vel = 0.2 #for bumper_based_learning
+angle_vel = 0.4
 
 class robot_move:
 	def __init__(self):

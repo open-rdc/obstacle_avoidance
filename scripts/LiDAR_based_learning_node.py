@@ -29,7 +29,7 @@ class cource_following_learning_node:
 		print("action_num: " + str(self.action_num))
 		self.rl = reinforcement_learning(n_action = self.action_num)
 		self.bridge = CvBridge()
-		self.image_sub = rospy.Subscriber("/camera/depth/image_raw", Image, self.callback)
+		self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.callback)
 		self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
 		self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.callback_scan)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
@@ -53,13 +53,12 @@ class cource_following_learning_node:
 
 	def callback(self, data):
 		try:
-			img = self.bridge.imgmsg_to_cv2(data, 'passthrough')
-			depth_array = np.array(img, dtype=np.float32) * 50 #check magic number
-			self.cv_image = depth_array.astype(np.uint8)
+			self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
 		except CvBridgeError as e:
 			print(e)
 
 	def reset_simulation(self):
+		self.action_pub.publish(0)
 		rospy.wait_for_service('/gazebo/set_model_state')
 		set_model_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
 		model_state = ModelState()
@@ -69,7 +68,7 @@ class cource_following_learning_node:
 		model_state.pose.position.z = 0
 		model_state.pose.orientation.x = 0
 		model_state.pose.orientation.y = 0
-		model_state.pose.orientation.z = random.random() - 0.5
+		model_state.pose.orientation.z = 0.3 * (random.random() - 0.5)
 		model_state.pose.orientation.w = 1
 		model_state.twist.linear.x = 0
 		model_state.twist.linear.y = 0
@@ -83,27 +82,32 @@ class cource_following_learning_node:
 		except rospy.ServiceException as exc:
 			print("Service did not process request: " + str(exc))
 
-	def checkInsideRectangle(self, points, width, length, angle):
+	def checkInsideRectangle(self, points, width, length, offset, angle):
 		for point in points:
 			x =   point[0] * math.cos(angle) + point[1] * math.sin(angle)
 			y = - point[0] * math.sin(angle) + point[1] * math.cos(angle)
-			if -width/2 <= y <= width/2 and 0 <= x <= length:
+			if (-width/2 + offset) <= y <= (width/2 + offset) and 0 <= x <= length:
 				return True
 		return False
 
 	def callback_scan(self, scan):
+		collision = False
 		points = []
 		angle = scan.angle_min
 		for distance in scan.ranges:
 			if distance != float('inf') and not math.isnan(distance):
 				points.append((distance * math.cos(angle), distance * math.sin(angle)))
 			angle += scan.angle_increment
-		if not self.checkInsideRectangle(points, 0.7, 1.0, math.radians(10)):
+			if distance <= 0.2:
+				collision = True
+		if not self.checkInsideRectangle(points, 1.0, 2.0, 0.5, math.radians(0)):
 			self.action = 1
-		elif not self.checkInsideRectangle(points, 0.7, 1.0, math.radians(0)):
+		elif not self.checkInsideRectangle(points, 1.0, 2.0, 0.0, math.radians(0)):
 			self.action = 0
 		else:
 			self.action = 2
+		if collision:
+			self.callback_bumper(True)
 
 	def callback_bumper(self, bumper):
 		if rospy.get_time() - self.previous_reset_time < 1:
@@ -126,7 +130,7 @@ class cource_following_learning_node:
 		self.episode += 1
 
 	def loop(self):
-		if self.cv_image.size != 640 * 480:
+		if self.cv_image.size != 640 * 480 * 3:
 			return
 
 		rospy.wait_for_service('/gazebo/get_model_state')
@@ -135,16 +139,18 @@ class cource_following_learning_node:
 			previous_model_state = get_model_state('mobile_base', 'world')
 		except rospy.ServiceException as exc:
 			print("Service did not process request: " + str(exc))
+
 		img = resize(self.cv_image, (48, 64), mode='constant')
-		imgobj = np.asanyarray([img])
+		r, g, b = cv2.split(img)
+		imgobj = np.asanyarray([r,g,b])
 
 		ros_time = str(rospy.Time.now())
 
-		if self.episode >= 100:
+		if self.episode >= 10:
 			self.learning = False
 
 		if self.learning:
-			if previous_model_state.pose.position.x < 5:
+			if previous_model_state.pose.position.y < 8:
 				action = self.rl.act_and_trains(imgobj, self.reward)
 				self.reward = 0 if action == self.action else -1
 				if action == self.action:
@@ -163,10 +169,11 @@ class cource_following_learning_node:
 				self.success = 0
 				self.episode += 1
 		else:
-			if previous_model_state.pose.position.x < 25:
+			if previous_model_state.pose.position.y < 8:
 				self.action = self.rl.act(imgobj)
 			else:
 				self.reset_simulation()
+				print("TEST MODE")
 		self.action_pub.publish(self.action)
 
 		temp = copy.deepcopy(img)

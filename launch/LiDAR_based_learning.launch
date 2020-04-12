@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-	<node pkg="obstacle_avoidance" type="robot_move.py" name="robot_move"/>
+	<node pkg="obstacle_avoidance" type="robot_move.py" name="robot_move">
+		<remap from="/mobile_base/commands/velocity" to="/cmd_vel" />
+	</node>
 	<node pkg="obstacle_avoidance" type="LiDAR_based_learning_node.py" name="LiDAR_based_learning_node" output="screen"/>
 </launch>
 

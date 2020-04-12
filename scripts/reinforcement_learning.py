@@ -8,7 +8,7 @@ from os.path import expanduser
 import csv
 
 class QFunction(chainer.Chain):
-	def __init__(self, n_history=1, n_action=4):
+	def __init__(self, n_history=3, n_action=4):
 		initializer = chainer.initializers.HeNormal()
 		super(QFunction, self).__init__(
 			conv1=L.Convolution2D(n_history, 32, ksize=8, stride=4, nobias=False, initialW=initializer),
@@ -31,7 +31,7 @@ class QFunction(chainer.Chain):
 		return h
 
 class reinforcement_learning:
-	def __init__(self, n_history=1, n_action=4):
+	def __init__(self, n_history=3, n_action=4):
 		self.q_func = QFunction(n_history, n_action)
 		try:
 			self.q_func.to_gpu()
@@ -39,7 +39,8 @@ class reinforcement_learning:
 			print("No GPU")
 		self.optimizer = chainer.optimizers.Adam(eps=1e-2)
 		self.optimizer.setup(self.q_func)
-		self.gamma = 0.95
+#		self.gamma = 0.95
+		self.gamma = 0
 		self.n_action = n_action
 		self.explorer = chainerrl.explorers.ConstantEpsilonGreedy(
 			epsilon=0.1, random_action_func=self.action_space_sample)
@@ -60,7 +61,7 @@ class reinforcement_learning:
 		return self.action
 	def stop_episode_and_train(self, obs, reward, done):
 		self.agent.stop_episode_and_train(obs, reward, done)
-		print('\x1b[6;30;42m' + 'Last step in this episode' + '\x1b[0m')
+#		print('\x1b[6;30;42m' + 'Last step in this episode' + '\x1b[0m')
 	def act(self, obs):
 		self.action = self.agent.act(obs)
 		action_prob = F.softmax(h5)[0]
