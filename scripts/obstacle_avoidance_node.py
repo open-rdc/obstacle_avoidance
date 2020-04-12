@@ -34,7 +34,6 @@ class obstacle_avoidance_node:
 		self.reward = 0
 		self.episode = 0
 		self.cv_image = np.zeros((480,640,3), np.uint8)
-		self.count = 0
 		self.learning = True
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
 		self.action_list = ['Front', 'Right', 'Left']
@@ -91,13 +90,13 @@ class obstacle_avoidance_node:
 		img = resize(self.cv_image, (48, 64), mode='constant')
 		imgobj = np.asanyarray([img])
 		self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
-		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
+		print("learning = " + str(self.learning) + " episode: " + str(self.episode) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
 
-		self.episode += 1
 		line = [str(self.episode), str(rospy.get_time() - self.start_time_s), str(reward)]
 		with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 			writer = csv.writer(f, lineterminator='\n')
 			writer.writerow(line)
+		self.episode += 1
 
 	def loop(self):
 		if self.cv_image.size != 640 * 480:
@@ -123,18 +122,18 @@ class obstacle_avoidance_node:
 			else:
 				reward = 1
 				self.action = self.rl.stop_episode_and_train(imgobj, reward, False)
-				self.episode += 1
 				line = [str(self.episode), str(rospy.get_time() - self.start_time_s), str(reward)]
 				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 					writer = csv.writer(f, lineterminator='\n')
 					writer.writerow(line)
 				self.reset_simulation()
+				self.episode += 1
 
 		else:
 			self.action = self.rl.act(imgobj)
 		self.action_pub.publish(self.action)
 
-		print("learning = " + str(self.learning) + " count: " + str(self.count) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
+		print("learning = " + str(self.learning) + " episode: " + str(self.episode) + " action: " + str(self.action) + ", reward: " + str(round(reward,5)))
 		temp = copy.deepcopy(img)
 		cv2.imshow("Resized Image", temp)
 		cv2.waitKey(1)
