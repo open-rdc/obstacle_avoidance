@@ -9,8 +9,9 @@ catkin build obstacle_avoidance
 
 ### Execution
 
+Bumper Based Machine Learning for Obstacle Aviodance
 ```
-roslaunch obstacle_avoidance learning_sim.launch
+roslaunch obstacle_avoidance bumper_based_learning_sim.launch
 ```
 
 ### Checking Results
