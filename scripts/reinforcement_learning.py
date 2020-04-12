@@ -68,7 +68,7 @@ class reinforcement_learning:
 		action_prob = action_prob.replace("variable([", "")
 		action_prob = action_prob.replace("])", "")
 		action_prob = map(float, action_prob.split())
-		return self.action, action_prob
+		return self.action
 
 	def save_agent(self):
 		self.agent.save('agent')

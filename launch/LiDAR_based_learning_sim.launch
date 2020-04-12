@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- load gazebo -->
+    <arg name = "render" default="true" />
+    <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch" >
+        <arg name="world_file" value="'$(find obstacle_avoidance)/world/my_stage01.world'"/>
+    </include>
+
+    <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
+        args="5 obstacle_avoidance LiDAR_based_learning.launch"
+        name="timed_roslaunch" output="screen" />
+</launch>
+
