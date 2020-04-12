@@ -10,7 +10,7 @@ catkin build obstacle_avoidance
 ### Execution
 
 ```
-roslaunch obstacle_avoidance learning_sim.launch
+roslaunch obstacle_avoidance LiDAR_based_learning_sim.launch
 ```
 
 ### Checking Results
