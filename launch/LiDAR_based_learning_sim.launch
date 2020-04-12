@@ -3,7 +3,7 @@
     <!-- load gazebo -->
     <arg name = "render" default="true" />
     <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch" >
-        <arg name="world_file" value="'$(find obstacle_avoidance)/world/my_stage01.world'"/>
+        <arg name="world_file" value="'$(find obstacle_avoidance)/world/streight_for_LiDAR.world'"/>
     </include>
 
     <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
