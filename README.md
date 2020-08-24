@@ -26,10 +26,18 @@ bring up gazebo and learning
 ```
 roslaunch obstacle_avoidance navigation_based_learning_sim.launch
 ```
+
+ /turtlebot3_navigation/launch/move_base.launchを変更
+```
+<arg name="cmd_vel_topic" default="/cmd_vel" /> --> <arg name="cmd_vel_topic" default="/nav_vel" />　
+ 
+```
+
 bring up navigation
 ```
 roslaunch obstacle_avoidance turtlebot3_navigation.launch map_file:={/YOUR_PATH/maps/willowgarage.yaml} waypoints_file:={/YOUR_PATH/maps/willow_loop.yaml}
 ```
+
 start waypoint navigation
 ```
 rosservice call /start_wp_nav
