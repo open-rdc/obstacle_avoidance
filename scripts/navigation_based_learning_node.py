@@ -121,11 +121,11 @@ class cource_following_learning_node:
 
 		ros_time = str(rospy.Time.now())
 
-		if self.episode >= 1:
+		if self.episode >= 30:
 			self.learning = False
 
 		if self.learning:
-			if self.loop_count < 18 or self.collision:
+			if self.loop_count < 18:
 				action = self.rl.act_and_trains(imgobj, self.reward)
 				self.reward = 0 if action == self.action else -1
 				if action == self.action:
