@@ -8,7 +8,7 @@ from os.path import expanduser
 import csv
 
 class QFunction(chainer.Chain):
-	def __init__(self, n_history=3, n_action=4):
+	def __init__(self, n_history=3, n_action=5):
 		initializer = chainer.initializers.HeNormal()
 		super(QFunction, self).__init__(
 			conv1=L.Convolution2D(n_history, 32, ksize=8, stride=4, nobias=False, initialW=initializer),
@@ -31,7 +31,7 @@ class QFunction(chainer.Chain):
 		return h
 
 class reinforcement_learning:
-	def __init__(self, n_history=3, n_action=4):
+	def __init__(self, n_history=3, n_action=5):
 		self.q_func = QFunction(n_history, n_action)
 		try:
 			self.q_func.to_gpu()
