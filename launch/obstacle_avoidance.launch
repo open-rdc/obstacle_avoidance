@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<node pkg="obstacle_avoidance" type="robot_move.py" name="robot_move"/>
-	<node pkg="obstacle_avoidance" type="obstacle_avoidance_node.py" name="obstacle_avoidance_node" output="screen"/>
-</launch>
-

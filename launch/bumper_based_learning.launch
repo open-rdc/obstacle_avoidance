@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="obstacle_avoidance" type="robot_move.py" name="robot_move"/>
+	<node pkg="obstacle_avoidance" type="bumper_based_learning_node.py" name="bumper_based_learning_node" output="screen"/>
+</launch>
+

@@ -20,10 +20,10 @@ import time
 import copy
 import random
 
-class obstacle_avoidance_node:
+class bumper_based_learning_node:
 	def __init__(self):
-		rospy.init_node('obstacle_avoidance_node', anonymous=True)
-		self.action_num = rospy.get_param("/obstacle_avoidance_node/action_num", 3)
+		rospy.init_node('bumper_based_learning_node', anonymous=True)
+		self.action_num = rospy.get_param("/bumper_based_learning_node/action_num", 3)
 		print("action_num: " + str(self.action_num))
 		self.rl = reinforcement_learning(n_action = self.action_num)
 		self.bridge = CvBridge()
@@ -139,7 +139,7 @@ class obstacle_avoidance_node:
 		cv2.waitKey(1)
 
 if __name__ == '__main__':
-	rg = obstacle_avoidance_node()
+	rg = bumper_based_learning_node()
 	DURATION = 0.1
 	r = rospy.Rate(1 / DURATION)
 	while not rospy.is_shutdown():
