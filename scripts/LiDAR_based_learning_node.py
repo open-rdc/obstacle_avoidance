@@ -53,7 +53,9 @@ class cource_following_learning_node:
 
 	def callback(self, data):
 		try:
-			self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+			img = self.bridge.imgmsg_to_cv2(data, "bgr8")
+			depth_array = np.array(img, dtype=np.float32) * 256 #check magic number
+			self.cv_image = depth_array.astype(np.uint16)
 		except CvBridgeError as e:
 			print(e)
 
