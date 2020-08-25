@@ -41,6 +41,7 @@
           </surface>
           <max_contacts>10</max_contacts>
         </collision>
+<!--
         <visual name='visual'>
           <cast_shadows>0</cast_shadows>
           <geometry>
@@ -56,6 +57,7 @@
             </script>
           </material>
         </visual>
+-->
         <self_collide>0</self_collide>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
