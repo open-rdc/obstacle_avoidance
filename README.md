@@ -1,22 +1,25 @@
 # obstacle_avoidance
 
 ### Build
-以下のレポジトリをクローン
-https://github.com/open-rdc/obstacle_avoidance
-ブランチ　develop/refine
-https://github.com/open-rdc/turtlebot3
-ブランチ　3_cameras
-https://github.com/open-rdc/fulanghua_navigation
-ブランチ　long_period
+
+以下のレポジトリをクローン  
+https://github.com/open-rdc/obstacle_avoidance  
+ブランチ　develop/refine  
+
+https://github.com/open-rdc/turtlebot3  
+ブランチ　3_cameras  
+
+https://github.com/open-rdc/fulanghua_navigation  
+ブランチ　long_period  
 
 ### Execution
-roslaunch obstacle_avoidance navigation_based_learning_sim.launch
+roslaunch obstacle_avoidance navigation_based_learning_sim.launch  
 
-rvizで自己位置を指定して，以下を入力
-rosservice call /start_wp_nav
+rvizで自己位置を指定して，以下を入力  
+rosservice call /start_wp_nav  
 
-訓練からテストに移行．Trueにすると，訓練に移行
-rosservice call  /training False
+訓練からテストに移行．Trueにすると，訓練に移行  
+rosservice call  /training False  
 
 # obstacle_avoidance
 
