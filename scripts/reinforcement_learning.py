@@ -8,7 +8,7 @@ from os.path import expanduser
 import csv
 
 class QFunction(chainer.Chain):
-	def __init__(self, n_history=3, n_action=5):
+	def __init__(self, n_history=3, n_action=3):
 		initializer = chainer.initializers.HeNormal()
 		super(QFunction, self).__init__(
 			conv1=L.Convolution2D(n_history, 32, ksize=8, stride=4, nobias=False, initialW=initializer),
@@ -43,7 +43,7 @@ class reinforcement_learning:
 		self.gamma = 0
 		self.n_action = n_action
 		self.explorer = chainerrl.explorers.ConstantEpsilonGreedy(
-			epsilon=0.1, random_action_func=self.action_space_sample)
+			epsilon=0.0, random_action_func=self.action_space_sample)
 		self.replay_buffer = chainerrl.replay_buffer.ReplayBuffer(capacity=10 ** 4)
 		self.phi = lambda x: x.astype(np.float32, copy=False)
 		self.agent = chainerrl.agents.DoubleDQN(
