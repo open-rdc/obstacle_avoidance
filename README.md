@@ -21,6 +21,9 @@ rosservice call /start_wp_nav
 訓練からテストに移行．Trueにすると，訓練に移行  
 rosservice call  /training False  
 
+回帰モデルで４時間学習した結果
+https://youtu.be/aN8SloC03U8
+
 実行例  
 https://youtu.be/vFZuFeirO5Q
 
