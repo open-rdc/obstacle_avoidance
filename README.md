@@ -21,11 +21,11 @@ rosservice call /start_wp_nav
 訓練からテストに移行．Trueにすると，訓練に移行  
 rosservice call  /training False  
 
-回帰モデルで４時間学習した結果
-https://youtu.be/aN8SloC03U8
+回帰モデルで４時間学習した結果  
+https://youtu.be/aN8SloC03U8  
 
-学習の様子
-![image](https://user-images.githubusercontent.com/5755200/91647763-52e72f80-ea99-11ea-85b6-aab8f08ad9b4.png)
+学習の様子  
+![image](https://user-images.githubusercontent.com/5755200/91647763-52e72f80-ea99-11ea-85b6-aab8f08ad9b4.png)  
 
 識別器をした場合の例  
 https://youtu.be/vFZuFeirO5Q
