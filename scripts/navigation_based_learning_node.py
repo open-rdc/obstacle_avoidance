@@ -30,7 +30,7 @@ import sys
 class cource_following_learning_node:
 	def __init__(self):
 		rospy.init_node('cource_following_learning_node', anonymous=True)
-		self.action_num = rospy.get_param("/LiDAR_based_learning_node/action_num", 3)
+		self.action_num = rospy.get_param("/LiDAR_based_learning_node/action_num", 1)
 		print("action_num: " + str(self.action_num))
 		self.dl = deep_learning(n_action = self.action_num)
 		self.bridge = CvBridge()
@@ -40,17 +40,16 @@ class cource_following_learning_node:
 #		self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
 		self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
 		self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.callback_scan)
-#		self.status_sub = rospy.Subscriber("/move_base/status", GoalStatusArray, self.callback_loop)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 		self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
-		self.action = 0
+		self.action = 0.0
 		self.reward = 0
 		self.episode = 0
 		self.count = 0
 		self.status = 0
 		self.loop_count = 0
-		self.success = 0
+		self.success = 0.0
 		self.vel = Twist()
 		self.cv_image = np.zeros((480,640,3), np.uint8)
 		self.cv_left_image = np.zeros((480,640,3), np.uint8)
@@ -62,6 +61,9 @@ class cource_following_learning_node:
 		self.path = 'data/result'
 		self.previous_reset_time = 0
 		self.start_time_s = rospy.get_time()
+		self.select_dl_out = False
+		self.correct_count = 0
+		self.incorrect_count = 0
 		os.makedirs(self.path + self.start_time)
 
 		with open(self.path + self.start_time + '/' +  'reward.csv', 'w') as f:
@@ -100,24 +102,7 @@ class cource_following_learning_node:
 	def callback_vel(self, data):
 		self.vel = data
 # action
-		if self.vel.angular.z > 0.1:
-			self.action = 1
-		elif self.vel.angular.z < -0.1:
-			self.action = 2
-		else:
-			self.action = 0
-
-#	def callback_loop(self, data):
-#		self.status = data.status_list[0]
-#
-#		if self.status.status == 3:
-#			rospy.wait_for_service('start_wp_nav')
-#			try:
-#				service = rospy.ServiceProxy('start_wp_nav', Trigger)
-#				response = service()
-#			except rospy.ServiceException as e:
-#				print("Service call failed: %s" % e)
-
+		self.action = self.vel.angular.z
 
 	def callback_dl_training(self, data):
 		resp = SetBoolResponse()
@@ -156,45 +141,50 @@ class cource_following_learning_node:
 
 		ros_time = str(rospy.Time.now())
 
-#		if self.episode >= 14:
-#			self.learning = False
-
 		if self.learning:
 			if self.loop_count < 100:
 				self.reward = 0
 				action = self.dl.act_and_trains(imgobj, self.action)
-				self.reward += 1 if action == self.action else 0
-				if self.action == 0:
-					action = self.dl.act_and_trains(imgobj_left, 2)
-					self.reward += 1 if action == 2 else 0
-					action = self.dl.act_and_trains(imgobj_right, 1)
-					self.reward += 1 if action == 1 else 0
-					self.success += self.reward / 3.0
+				if abs(action - self.action) < 0.2:
+					self.correct_count += 1
+					self.incorrect_count = 0
 				else:
-					self.success += self.reward
+					self.incorrect_count += 1
+					self.correct_count = 0
+				if self.correct_count >= 5:
+					self.select_dl_out = True
+				if self.incorrect_count >= 2:
+					self.select_dl_out = False
+				if abs(self.action) < 0.1:
+					action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
+					action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
 				self.count += 1
-				print(self.reward, end='')
-				sys.stdout.flush()
 				self.loop_count += 1
+				self.success += abs(action - self.action)
 			else:
 				action = self.dl.act_and_trains(imgobj, self.action)
-				line = [str(self.episode), str(float(self.success) / self.count)]
+				line = [str(self.episode), str(self.success)]
 				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 					writer = csv.writer(f, lineterminator='\n')
 					writer.writerow(line)
-				print()
-				print(" episode: " + str(self.episode) + ", success ratio: " + str(float(self.success)/self.count) + " " + str(self.count))
+				print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success) + " " + str(self.count))
 				self.count = 0
-				self.success = 0
+				self.success = 0.0
 				self.loop_count = 0
 				self.collision = False
 				self.episode += 1
-			self.action_pub.publish(self.action)
+			if self.select_dl_out == True:
+				self.action = self.dl.act(imgobj)
+			self.vel.linear.x = 0.2
+			self.vel.angular.z = self.action
+			self.nav_pub.publish(self.vel)
 
 		else:
 			self.action = self.dl.act(imgobj)
 			print("TEST MODE: " + str(self.action))
-			self.action_pub.publish(self.action)
+			self.vel.linear.x = 0.2
+			self.vel.angular.z = self.action
+			self.nav_pub.publish(self.vel)
 
 		temp = copy.deepcopy(img)
 		cv2.imshow("Resized Image", temp)
