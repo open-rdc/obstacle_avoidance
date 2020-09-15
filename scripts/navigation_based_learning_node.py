@@ -146,15 +146,6 @@ class cource_following_learning_node:
 				self.reward = 0
 				action = self.dl.act_and_trains(imgobj, self.action)
 				if abs(action - self.action) < 0.2:
-					self.correct_count += 1
-					self.incorrect_count = 0
-				else:
-					self.incorrect_count += 1
-					self.correct_count = 0
-				if self.correct_count >= 5:
-					self.select_dl_out = True
-				if self.incorrect_count >= 2:
-					self.select_dl_out = False
 				if abs(self.action) < 0.1:
 					action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
 					action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
