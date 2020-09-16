@@ -146,9 +146,9 @@ class cource_following_learning_node:
 				self.reward = 0
 				action = self.dl.act_and_trains(imgobj, self.action)
 				if abs(action - self.action) < 0.2:
-				if abs(self.action) < 0.1:
-					action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
-					action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
+					if abs(self.action) < 0.1:
+						action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
+						action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
 				self.count += 1
 				self.loop_count += 1
 				self.success += abs(action - self.action)
