@@ -14,6 +14,8 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32, Int8
 from std_srvs.srv import Trigger
 from actionlib_msgs.msg import GoalStatusArray
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_srvs.srv import Empty
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import GetModelState
@@ -43,6 +45,13 @@ class cource_following_learning_node:
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 		self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
+        self.pose_sub= rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+        self.path_sub= rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
+		self.pose = 0.0
+        self.pose_x = 0.0
+        self.pose_y = 0.0
+        self.path = 0.0
+        self.distance = 0.0
 		self.action = 0.0
 		self.reward = 0
 		self.episode = 0
@@ -87,6 +96,27 @@ class cource_following_learning_node:
 			self.cv_right_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
 		except CvBridgeError as e:
 			print(e)
+
+    def callback_path(self, data):
+		self.path = data
+
+ 	def callback_pose(self, data):
+        self.distance_list = []
+        self.pose = data.pose.pose
+        self.pose_x = self.pose.position.x
+        self.pose_y = self.pose.position.y
+
+        for i in range(len(self.path.poses)):
+            self.path_x = self.path.poses[i].pose.position.x
+            self.path_y = self.path.poses[i].pose.position.y
+            self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 - (self.pose_y - self.path_y)**2))
+            self.distance_list.append(self.distance)
+		
+		if min(self.distance_list) < 0.5:
+			self.learning = False
+		else:
+			self.learning = True
+
 
 	def callback_scan(self, scan):
 		points = []
