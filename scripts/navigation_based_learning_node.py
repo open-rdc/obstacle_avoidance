@@ -111,11 +111,6 @@ class cource_following_learning_node:
             self.path_y = self.path.poses[i].pose.position.y
             self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 - (self.pose_y - self.path_y)**2))
             self.distance_list.append(self.distance)
-		
-		if min(self.distance_list) < 0.5:
-			self.learning = False
-		else:
-			self.learning = True
 
 
 	def callback_scan(self, scan):
@@ -175,10 +170,9 @@ class cource_following_learning_node:
 			if self.loop_count < 100:
 				self.reward = 0
 				action = self.dl.act_and_trains(imgobj, self.action)
-				if abs(action - self.action) < 0.2:
-					if abs(self.action) < 0.1:
-						action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
-						action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
+				if abs(self.action) < 0.1:
+					action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
+					action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
 				self.count += 1
 				self.loop_count += 1
 				self.success += abs(action - self.action)
@@ -194,14 +188,21 @@ class cource_following_learning_node:
 				self.loop_count = 0
 				self.collision = False
 				self.episode += 1
-			if self.select_dl_out == True:
-				self.action = self.dl.act(imgobj)
+
 			self.vel.linear.x = 0.2
 			self.vel.angular.z = self.action
 			self.nav_pub.publish(self.vel)
 
 		else:
-			self.action = self.dl.act(imgobj)
+
+			if min(self.distance_list) > 0.5:
+				if min(self.distance_list) > 0.1
+					action = self.dl.act_and_trains(imgobj, self.action)
+				else:
+					self.action = self.dl.act(imgobj)	
+			else:
+				self.action = self.dl.act(imgobj)
+			
 			print("TEST MODE: " + str(self.action))
 			self.vel.linear.x = 0.2
 			self.vel.angular.z = self.action
