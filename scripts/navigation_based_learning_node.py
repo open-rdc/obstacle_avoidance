@@ -25,6 +25,7 @@ import csv
 import os
 import time
 import copy
+import numpy as np
 import random
 import math
 import sys
@@ -45,13 +46,13 @@ class cource_following_learning_node:
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 		self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
-        self.pose_sub= rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
-        self.path_sub= rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
+		self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+		self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
 		self.pose = 0.0
-        self.pose_x = 0.0
-        self.pose_y = 0.0
-        self.path = 0.0
-        self.distance = 0.0
+		self.pose_x = 0.0
+		self.pose_y = 0.0
+		self.path = 0.0
+		self.distance = 0.0
 		self.action = 0.0
 		self.reward = 0
 		self.episode = 0
@@ -97,20 +98,20 @@ class cource_following_learning_node:
 		except CvBridgeError as e:
 			print(e)
 
-    def callback_path(self, data):
+	def callback_path(self, data):
 		self.path = data
 
- 	def callback_pose(self, data):
-        self.distance_list = []
-        self.pose = data.pose.pose
-        self.pose_x = self.pose.position.x
-        self.pose_y = self.pose.position.y
+	def callback_pose(self, data):
+		self.distance_list = []
+		self.pose = data.pose.pose
+		self.pose_x = self.pose.position.x
+		self.pose_y = self.pose.position.y
 
-        for i in range(len(self.path.poses)):
-            self.path_x = self.path.poses[i].pose.position.x
-            self.path_y = self.path.poses[i].pose.position.y
-            self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 - (self.pose_y - self.path_y)**2))
-            self.distance_list.append(self.distance)
+		for i in range(len(self.path.poses)):
+			self.path_x = self.path.poses[i].pose.position.x
+			self.path_y = self.path.poses[i].pose.position.y
+			self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 - (self.pose_y - self.path_y)**2))
+			self.distance_list.append(self.distance)
 
 
 	def callback_scan(self, scan):
@@ -196,11 +197,9 @@ class cource_following_learning_node:
 		else:
 
 			if min(self.distance_list) > 0.5:
-				if min(self.distance_list) > 0.1
-					action = self.dl.act_and_trains(imgobj, self.action)
-				else:
-					self.action = self.dl.act(imgobj)	
-			else:
+				action = self.dl.act_and_trains(imgobj, self.action)
+
+			elif min(self.distance_list) < 0.1:
 				self.action = self.dl.act(imgobj)
 			
 			print("TEST MODE: " + str(self.action))
