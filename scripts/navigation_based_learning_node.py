@@ -51,8 +51,9 @@ class cource_following_learning_node:
 		self.pose = 0.0
 		self.pose_x = 0.0
 		self.pose_y = 0.0
-		self.path = 0.0
+		self.path_pose = 0.0
 		self.distance = 0.0
+		self.min_distance = 0.0
 		self.action = 0.0
 		self.reward = 0
 		self.episode = 0
@@ -66,12 +67,12 @@ class cource_following_learning_node:
 		self.cv_right_image = np.zeros((480,640,3), np.uint8)
 		self.learning = True
 		self.collision = False
+		self.modify = False
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
 		self.action_list = ['Front', 'Right', 'Left']
 		self.path = 'data/result'
 		self.previous_reset_time = 0
 		self.start_time_s = rospy.get_time()
-		self.select_dl_out = False
 		self.correct_count = 0
 		self.incorrect_count = 0
 		os.makedirs(self.path + self.start_time)
@@ -99,7 +100,7 @@ class cource_following_learning_node:
 			print(e)
 
 	def callback_path(self, data):
-		self.path = data
+		self.path_pose = data
 
 	def callback_pose(self, data):
 		self.distance_list = []
@@ -107,11 +108,12 @@ class cource_following_learning_node:
 		self.pose_x = self.pose.position.x
 		self.pose_y = self.pose.position.y
 
-		for i in range(len(self.path.poses)):
-			self.path_x = self.path.poses[i].pose.position.x
-			self.path_y = self.path.poses[i].pose.position.y
-			self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 - (self.pose_y - self.path_y)**2))
+		for i in range(len(self.path_pose.poses)):
+			self.path_x = self.path_pose.poses[i].pose.position.x
+			self.path_y = self.path_pose.poses[i].pose.position.y
+			self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 + (self.pose_y - self.path_y)**2))
 			self.distance_list.append(self.distance)
+			self.min_distance = min(self.distance_list)
 
 
 	def callback_scan(self, scan):
@@ -168,41 +170,39 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 		if self.learning:
-			if self.loop_count < 100:
-				self.reward = 0
-				action = self.dl.act_and_trains(imgobj, self.action)
-				if abs(self.action) < 0.1:
-					action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
-					action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
-				self.count += 1
-				self.loop_count += 1
-				self.success += abs(action - self.action)
-			else:
-				action = self.dl.act_and_trains(imgobj, self.action)
-				line = [str(self.episode), str(self.success)]
-				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
-					writer = csv.writer(f, lineterminator='\n')
-					writer.writerow(line)
-				print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success) + " " + str(self.count))
-				self.count = 0
-				self.success = 0.0
-				self.loop_count = 0
-				self.collision = False
-				self.episode += 1
+			action = self.dl.act_and_trains(imgobj, self.action)
+			if abs(self.action) < 0.1:
+				action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
+				action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
+
+			print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success))
+			line = [str(self.episode), str(self.success)]
+			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+				writer = csv.writer(f, lineterminator='\n')
+				writer.writerow(line)
+
+			self.success += abs(action - self.action)
+			self.episode += 1
+			print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success))
 
 			self.vel.linear.x = 0.2
 			self.vel.angular.z = self.action
 			self.nav_pub.publish(self.vel)
 
 		else:
+			if self.min_distance > 0.3:
+				self.modify = True
+			elif self.min_distance < 0.1:
+				self.modify = False
 
-			if min(self.distance_list) > 0.5:
+			if self.modify:
 				action = self.dl.act_and_trains(imgobj, self.action)
+				print("MODIFY: " + " distance: " + str(self.min_distance))
 
-			elif min(self.distance_list) < 0.1:
+			else:
 				self.action = self.dl.act(imgobj)
-			
-			print("TEST MODE: " + str(self.action))
+				print("TEST MODE: " + " angular:" + str(self.action) + ", distance: " + str(self.min_distance))
+
 			self.vel.linear.x = 0.2
 			self.vel.angular.z = self.action
 			self.nav_pub.publish(self.vel)
