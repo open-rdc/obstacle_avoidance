@@ -19,7 +19,7 @@
         name="timed_roslaunch" output="screen" />
 
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="10 obstacle_avoidance turtlebot3_navigation.launch map_file:=/home/mirai/catkin_ws/src/obstacle_avoidance/maps/willowgarage.yaml waypoints_file:=/home/mirai/catkin_ws/src/obstacle_avoidance/maps/willow_loop.yaml"
+        args="10 obstacle_avoidance turtlebot3_navigation.launch map_file:=/home/lab-user/masaya_ws/src/obstacle_avoidance/maps/willowgarage.yaml waypoints_file:=/home/lab-user/masaya_ws/src/obstacle_avoidance/maps/willow_loop.yaml"
         name="timed_roslaunch2" />
 
 </launch>
