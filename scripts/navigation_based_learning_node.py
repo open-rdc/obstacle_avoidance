@@ -14,6 +14,8 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32, Int8
 from std_srvs.srv import Trigger
 from actionlib_msgs.msg import GoalStatusArray
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_srvs.srv import Empty
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import GetModelState
@@ -43,6 +45,14 @@ class cource_following_learning_node:
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 		self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
+                self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+		self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
+		self.pose = 0.0
+		self.pose_x = 0.0
+		self.pose_y = 0.0
+		self.path_pose = 0.0
+		self.distance = 0.0
+		self.min_distance = 0.0
 		self.action = 0.0
 		self.reward = 0
 		self.episode = 0
@@ -87,6 +97,21 @@ class cource_following_learning_node:
 			self.cv_right_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
 		except CvBridgeError as e:
 			print(e)
+
+        def callback_path(self, data):
+        	self.path_pose = data
+	def callback_pose(self, data):
+		self.distance_list = []
+		self.pose = data.pose.pose
+		self.pose_x = self.pose.position.x
+		self.pose_y = self.pose.position.y
+
+		for i in range(len(self.path_pose.poses)):
+			self.path_x = self.path_pose.poses[i].pose.position.x
+			self.path_y = self.path_pose.poses[i].pose.position.y
+			self.distance = np.sqrt(abs((self.pose_x - self.path_x)**2 + (self.pose_y - self.path_y)**2))
+			self.distance_list.append(self.distance)
+			self.min_distance = min(self.distance_list)
 
 	def callback_scan(self, scan):
 		points = []
@@ -141,31 +166,22 @@ class cource_following_learning_node:
 
 		ros_time = str(rospy.Time.now())
 
-		if self.learning:
-			if self.loop_count < 100:
-				self.reward = 0
-				action = self.dl.act_and_trains(imgobj, self.action)
-				if abs(action - self.action) < 0.2:
-					if abs(self.action) < 0.1:
-						action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
-						action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
-				self.count += 1
-				self.loop_count += 1
-				self.success += abs(action - self.action)
-			else:
-				action = self.dl.act_and_trains(imgobj, self.action)
-				line = [str(self.episode), str(self.success)]
-				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
-					writer = csv.writer(f, lineterminator='\n')
-					writer.writerow(line)
-				print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success) + " " + str(self.count))
-				self.count = 0
-				self.success = 0.0
-				self.loop_count = 0
-				self.collision = False
-				self.episode += 1
-			if self.select_dl_out == True:
-				self.action = self.dl.act(imgobj)
+                if self.learning:
+		        action = self.dl.act_and_trains(imgobj, self.action)
+			if abs(self.action) < 0.1:
+			        action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
+				action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
+
+			print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success))
+			line = [str(self.episode), str(self.success)]
+			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+				writer = csv.writer(f, lineterminator='\n')
+				writer.writerow(line)
+
+			self.success += abs(action - self.action)
+			self.episode += 1
+			print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success))
+
 			self.vel.linear.x = 0.2
 			self.vel.angular.z = self.action
 			self.nav_pub.publish(self.vel)
