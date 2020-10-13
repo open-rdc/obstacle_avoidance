@@ -5,6 +5,7 @@ from chainer import Chain, Variable
 from chainer.datasets import TupleDataset
 from chainer.iterators import SerialIterator
 from chainer.optimizer_hooks import WeightDecay
+from chainer import serializers
 import numpy as np
 import matplotlib as plt
 import os
@@ -47,7 +48,7 @@ class deep_learning:
 		self.results_train['loss'], self.results_train['accuracy'] = [], []
 		self.loss_list = []
 		self.acc_list = []
-		self.data = []
+                self.data = []
 		self.target_angles = []
 
 	def act_and_trains(self, imgobj, target_angle):
@@ -78,6 +79,8 @@ class deep_learning:
 			x_test = chainer.dataset.concat_examples(x, -1)
 			with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
 				action_value = self.net(x_test)
+
+                       # chainer.serializers.save_npz('/home/lab-user/masaya_ws/src/obstacle_avoidance/net_model/model.net', self.net )
 			return action_value.data[0][0]
 
 	def act(self, imgobj):
