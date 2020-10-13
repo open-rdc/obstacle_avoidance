@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+	<node pkg="obstacle_avoidance" type="navigation_based_learning.py" name="navigation_based_learning_node" output="screen"/>
+
+ 	 <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
+        	args="10 orne_navigation_executor play_waypoints_nav_gamma.launch map_file:=/home/orne/20200812_cit3f waypoints_file:=/home/orne/cit3F.yaml"
+	name="timed_roslaunch" />
+
+</launch>

@@ -14,7 +14,7 @@ class robot_move:
 	def __init__(self):
 		rospy.init_node('robot_move', anonymous=True)
 		self.action_sub = rospy.Subscriber("/action", Int8, self.callback_action)
-		self.vel_pub = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=10)
+		self.vel_pub = rospy.Publisher('/icart_mini/cmd_vel', Twist, queue_size=10)
 		self.action = 0
 		self.vel_msg = Twist()
 
