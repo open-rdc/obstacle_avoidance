@@ -163,7 +163,7 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 
-		if self.episode == 10000:
+		if self.episode == 4000:
 			self.learning = False
 
 		if self.learning:
@@ -185,7 +185,21 @@ class cource_following_learning_node:
 			angle_error = abs(action - target_action)
 			"""
 
-			# proposed method
+			# proposed method (new)
+			action, loss = self.dl.act_and_trains(imgobj, target_action)
+			if abs(target_action) < 0.1:
+				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
+				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
+			angle_error = abs(action - target_action)
+			if distance > 0.1:
+				self.select_dl = False
+			elif distance < 0.05:
+				self.select_dl = True
+			if self.select_dl and self.episode >= 0:
+				target_action = 0
+
+			"""
+			# proposed method (old)
 			action, loss = self.dl.act_and_trains(imgobj, target_action)
 			if abs(target_action) < 0.1:
 				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
@@ -197,6 +211,7 @@ class cource_following_learning_node:
 				self.select_dl = True
 			if self.select_dl and self.episode >= 0:
 				target_action = action
+			"""
 
 			"""
 			# follow line method
