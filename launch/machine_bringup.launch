@@ -3,7 +3,7 @@
     <include file="$(find orne_bringup)/launch/orne_gamma.launch">
     </include>
 
-    <include file="$(find obstacle_avoidance)/launch/camera_multi.launch">
+    <include file="$(find obstacle_avoidance)/launch/camera_multi_light.launch">
     </include>
 
 </launch>

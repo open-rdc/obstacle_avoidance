@@ -5,6 +5,7 @@ from chainer import Chain, Variable
 from chainer.datasets import TupleDataset
 from chainer.iterators import SerialIterator
 from chainer.optimizer_hooks import WeightDecay
+from chainer import serializers
 import numpy as np
 import matplotlib as plt
 import os
@@ -93,6 +94,9 @@ class deep_learning:
 	def result(self):
 			accuracy = self.accuracy
 			return accuracy
+
+        def save(self):
+                        chainer.serializers.save_npz('/home/orne/masaya_ws/src/obstacle_avoidance/net_models/proposed_old_10000step.net', self.net)
 
 if __name__ == '__main__':
         dl = deep_learning()
