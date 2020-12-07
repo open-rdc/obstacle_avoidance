@@ -14,6 +14,8 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32, Int8
 from std_srvs.srv import Trigger
 from actionlib_msgs.msg import GoalStatusArray
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_srvs.srv import Empty
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import GetModelState
@@ -38,11 +40,14 @@ class cource_following_learning_node:
 		self.image_left_sub = rospy.Subscriber("/camera_left/rgb/image_raw", Image, self.callback_left_camera)
 		self.image_right_sub = rospy.Subscriber("/camera_right/rgb/image_raw", Image, self.callback_right_camera)
 #		self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
-		self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
+		self.vel_sub = rospy.Subscriber("/joy_vel", Twist, self.callback_vel)
 		self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.callback_scan)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 		self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
+#		self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+#		self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
+		self.min_distance = 0.0
 		self.action = 0.0
 		self.reward = 0
 		self.episode = 0
@@ -56,20 +61,20 @@ class cource_following_learning_node:
 		self.cv_right_image = np.zeros((480,640,3), np.uint8)
 		self.learning = True
 		self.collision = False
+		self.select_dl = False
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
 		self.action_list = ['Front', 'Right', 'Left']
 		self.path = 'data/result'
 		self.previous_reset_time = 0
 		self.start_time_s = rospy.get_time()
-		self.select_dl_out = False
 		self.correct_count = 0
 		self.incorrect_count = 0
 		os.makedirs(self.path + self.start_time)
 
 		with open(self.path + self.start_time + '/' +  'reward.csv', 'w') as f:
 			writer = csv.writer(f, lineterminator='\n')
-			writer.writerow(['epsode', 'time(s)', 'reward'])
-
+			writer.writerow(['step', 'mode', 'loss', 'angle_error(rad)', 'distance(m)'])
+     
 	def callback(self, data):
 		try:
 			self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -87,6 +92,23 @@ class cource_following_learning_node:
 			self.cv_right_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
 		except CvBridgeError as e:
 			print(e)
+        """
+	def callback_path(self, data):
+		self.path_pose = data
+
+	def callback_pose(self, data):
+		distance_list = []
+		pos = data.pose.pose.position
+
+		try:
+			for pose in self.path_pose.poses:
+				path = pose.pose.position
+				distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
+				distance_list.append(distance)
+			self.min_distance = min(distance_list)
+		except NameError:
+			print("no path")
+        """
 
 	def callback_scan(self, scan):
 		points = []
@@ -141,49 +163,49 @@ class cource_following_learning_node:
 
 		ros_time = str(rospy.Time.now())
 
+
+		if self.episode == 2000:
+			self.learning = False
+
 		if self.learning:
-			if self.loop_count < 100:
-				self.reward = 0
-				action = self.dl.act_and_trains(imgobj, self.action)
-				if abs(action - self.action) < 0.2:
-					self.correct_count += 1
-					self.incorrect_count = 0
-				else:
-					self.incorrect_count += 1
-					self.correct_count = 0
-				if self.correct_count >= 5:
-					self.select_dl_out = True
-				if self.incorrect_count >= 2:
-					self.select_dl_out = False
-				if abs(self.action) < 0.1:
-					action_left = self.dl.act_and_trains(imgobj_left, self.action - 0.2)
-					action_right = self.dl.act_and_trains(imgobj_right, self.action + 0.2)
-				self.count += 1
-				self.loop_count += 1
-				self.success += abs(action - self.action)
-			else:
-				action = self.dl.act_and_trains(imgobj, self.action)
-				line = [str(self.episode), str(self.success)]
-				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
-					writer = csv.writer(f, lineterminator='\n')
-					writer.writerow(line)
-				print(" episode: " + str(self.episode) + ", success ratio: " + str(self.success) + " " + str(self.count))
-				self.count = 0
-				self.success = 0.0
-				self.loop_count = 0
-				self.collision = False
-				self.episode += 1
-			if self.select_dl_out == True:
-				self.action = self.dl.act(imgobj)
+			target_action = self.action
+			distance = self.min_distance
+
+			# follow line method
+			action, loss = self.dl.act_and_trains(imgobj, target_action)
+			if abs(target_action) < 0.1:
+				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
+				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
+			angle_error = abs(action - target_action)
+
+			# end method
+
+			print(" episode: " + str(self.episode) + ", loss: " + str(loss) + ", angle_error: " + str(angle_error) + ", distance: " + str(distance))
+			self.episode += 1
+			line = [str(self.episode), "training", str(loss), str(angle_error), str(distance)]
+			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+				writer = csv.writer(f, lineterminator='\n')
+				writer.writerow(line)
+				
 			self.vel.linear.x = 0.2
-			self.vel.angular.z = self.action
+			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 
 		else:
-			self.action = self.dl.act(imgobj)
-			print("TEST MODE: " + str(self.action))
+			target_action = self.dl.act(imgobj)
+			distance = self.min_distance
+			print("TEST MODE: " + " angular:" + str(target_action) + ", distance: " + str(distance))
+
+			self.episode += 1
+			angle_error = abs(self.action - target_action)
+			line = [str(self.episode), "test", "0", str(angle_error), str(distance)]
+			
+			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+				writer = csv.writer(f, lineterminator='\n')
+				writer.writerow(line)
+				
 			self.vel.linear.x = 0.2
-			self.vel.angular.z = self.action
+			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 
 		temp = copy.deepcopy(img)

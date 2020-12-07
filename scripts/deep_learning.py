@@ -12,7 +12,7 @@ from os.path import expanduser
 
 # HYPER PARAM
 BATCH_SIZE = 8
-MAX_DATA = 1000
+MAX_DATA = 10000
 
 class Net(chainer.Chain):
 	def __init__(self, n_channel=3, n_action=1):
@@ -78,7 +78,7 @@ class deep_learning:
 			x_test = chainer.dataset.concat_examples(x, -1)
 			with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
 				action_value = self.net(x_test)
-			return action_value.data[0][0]
+			return action_value.data[0][0], loss_train.array
 
 	def act(self, imgobj):
 			x = [self.phi(s) for s in [imgobj]]
