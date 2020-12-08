@@ -14,14 +14,11 @@
 
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model mobile_base -x 0.0 -y 0.0 -z 0.0 -param robot_description" />
 
+  <include file="$(find obstacle_avoidance)/launch/teleop.launch"/>
+
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
         args="5 obstacle_avoidance navigation_based_learning.launch"
         name="timed_roslaunch" output="screen" />
 
-  <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="10 teleop_twist_joy teleop.launch"
-        name="timed_roslaunch2">
-    <remap from="cmd_vel" to="joy_vel"/>
-  </node>
 </launch>
 
