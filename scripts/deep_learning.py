@@ -5,9 +5,11 @@ from chainer import Chain, Variable
 from chainer.datasets import TupleDataset
 from chainer.iterators import SerialIterator
 from chainer.optimizer_hooks import WeightDecay
+from chainer import serializers
 import numpy as np
 import matplotlib as plt
 import os
+import time
 from os.path import expanduser
 
 # HYPER PARAM
@@ -93,6 +95,14 @@ class deep_learning:
 	def result(self):
 			accuracy = self.accuracy
 			return accuracy
+
+        def save(self, save_path):
+                        path = save_path + time.strftime("%Y%m%d_%H:%M:%S")
+                        os.mkdir(path)
+                        chainer.serializers.save_npz(path + '/model.net' , self.net)
+
+        def load(self, load_path):
+                        chainer.serializers.load_npz(load_path , self.net)
 
 if __name__ == '__main__':
         dl = deep_learning()

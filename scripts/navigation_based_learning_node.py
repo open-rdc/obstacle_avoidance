@@ -65,6 +65,8 @@ class cource_following_learning_node:
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
 		self.action_list = ['Front', 'Right', 'Left']
 		self.path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/result/'
+                self.save_path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/model/'
+                self.load_path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/model/20201117_08:50:05/model.net'
 		self.previous_reset_time = 0
 		self.start_time_s = rospy.get_time()
 		self.correct_count = 0
@@ -163,14 +165,16 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 
-		if self.episode == 10000:
+		if self.episode == 0:
 			self.learning = False
+                        #self.dl.save(self.save_path)
+                        self.dl.load(self.load_path)
 
 		if self.learning:
 			target_action = self.action
 			distance = self.min_distance
 
-		        """	
+                        """
 			# conventional method
 			if distance > 0.1:
 				self.select_dl = False
@@ -183,10 +187,22 @@ class cource_following_learning_node:
 				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
 				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
 			angle_error = abs(action - target_action)
-		        """
-
-
-			# proposed method
+                        """
+                        """
+			# proposed method (new)
+			action, loss = self.dl.act_and_trains(imgobj, target_action)
+			if abs(target_action) < 0.1:
+				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
+				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
+		        angle_error = abs(action - target_action)
+			if distance > 0.1:
+				self.select_dl = False
+			elif distance < 0.05:
+				self.select_dl = True
+			if self.select_dl and self.episode >= 0:
+				target_action = 0
+                        """
+			# proposed method (old)
 			action, loss = self.dl.act_and_trains(imgobj, target_action)
 			if abs(target_action) < 0.1:
 				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
@@ -198,19 +214,20 @@ class cource_following_learning_node:
 				self.select_dl = True
 			if self.select_dl and self.episode >= 0:
 				target_action = action
+			
 
                         """
+                        
 			# follow line method
 			action, loss = self.dl.act_and_trains(imgobj, target_action)
 			if abs(target_action) < 0.1:
 				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
 				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
 			angle_error = abs(action - target_action)
-		    
                         """
 			# end method
 
-			print(" episode: " + str(self.episode) + ", loss: " + str(loss) + ", angle_error: " + str(angle_error) + ", distance: " + str(distance))
+		        print(" episode: " + str(self.episode) + ", loss: " + str(loss) + ", angle_error: " + str(angle_error) + ", distance: " + str(distance))
 			self.episode += 1
 			line = [str(self.episode), "training", str(loss), str(angle_error), str(distance)]
 			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
