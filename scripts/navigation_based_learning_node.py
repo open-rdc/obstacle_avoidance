@@ -65,8 +65,8 @@ class cource_following_learning_node:
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
 		self.action_list = ['Front', 'Right', 'Left']
 		self.path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/result/'
-                self.save_path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/model/'
-                self.load_path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/model/20201117_08:50:05/model.net'
+#                self.save_path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/model/'
+#                self.load_path = '/home/lab-user/masaya_ws/src/obstacle_avoidance/data/model/20201117_08:50:05/model.net'
 		self.previous_reset_time = 0
 		self.start_time_s = rospy.get_time()
 		self.correct_count = 0
@@ -165,10 +165,10 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 
-		if self.episode == 0:
+		if self.episode == 4000:
 			self.learning = False
                         #self.dl.save(self.save_path)
-                        self.dl.load(self.load_path)
+                        #self.dl.load(self.load_path)
 
 		if self.learning:
 			target_action = self.action

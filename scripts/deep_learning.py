@@ -24,15 +24,20 @@ class Net(chainer.Chain):
 			conv2=L.Convolution2D(32, 64, ksize=3, stride=2, nobias=False, initialW=initializer),
 			conv3=L.Convolution2D(64, 64, ksize=3, stride=1, nobias=False, initialW=initializer),
 			fc4=L.Linear(960, 512, initialW=initializer),
-			fc5=L.Linear(512, n_action, initialW=np.zeros((n_action, 512), dtype=np.int32))
+			fc5=L.Linear(512, 256, initialW=initializer),
+                        lstm6=L.LSTM(256, 256), 
+			fc7=L.Linear(256, n_action, initialW=np.zeros((n_action, 256), dtype=np.int32))
 			)
+
 	def __call__(self, x, test=False):
 		s = chainer.Variable(x)
 		h1 = F.relu(self.conv1(s))
 		h2 = F.relu(self.conv2(h1))
 		h3 = F.relu(self.conv3(h2))
 		h4 = F.relu(self.fc4(h3))
-		h = self.fc5(h4)
+		h5 = F.relu(self.fc5(h4))
+                h6 = F.relu(self.lstm6(h5))
+		h = self.fc7(h6)
 		return h
 
 class deep_learning:
@@ -64,7 +69,6 @@ class deep_learning:
 			train_iter = SerialIterator(dataset, batch_size = BATCH_SIZE, repeat=True, shuffle=True)
 			train_batch  = train_iter.next()
 			x_train, t_train = chainer.dataset.concat_examples(train_batch, -1)
-
 			y_train = self.net(x_train)
 			loss_train = F.mean_squared_error(y_train, Variable(t_train.reshape(BATCH_SIZE, 1)))
 
@@ -72,6 +76,7 @@ class deep_learning:
 
 			self.net.cleargrads()
 			loss_train.backward()
+                        loss_train.unchain_backward()
 			self.optimizer.update()
 			
 			self.count += 1
