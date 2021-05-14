@@ -11,6 +11,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from deep_learning import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseArray
 from std_msgs.msg import Float32, Int8
 from std_srvs.srv import Trigger
 from actionlib_msgs.msg import GoalStatusArray
@@ -56,6 +57,7 @@ class cource_following_learning_node:
         self.loop_count = 0
         self.success = 0.0
         self.vel = Twist()
+        self.path_pose = PoseArray()
         self.cv_image = np.zeros((480,640,3), np.uint8)
         self.cv_left_image = np.zeros((480,640,3), np.uint8)
         self.cv_right_image = np.zeros((480,640,3), np.uint8)
@@ -102,14 +104,13 @@ class cource_following_learning_node:
         distance_list = []
         pos = data.pose.pose.position
 
-        try:
-            for pose in self.path_pose.poses:
-                path = pose.pose.position
-                distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
-                distance_list.append(distance)
+        for pose in self.path_pose.poses:
+            path = pose.pose.position
+            distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
+            distance_list.append(distance)
+
+        if distance_list:
             self.min_distance = min(distance_list)
-        except NameError:
-            print("no path")
 
     def callback_scan(self, scan):
         points = []
