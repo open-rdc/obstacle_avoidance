@@ -166,10 +166,10 @@ class cource_following_learning_node:
         ros_time = str(rospy.Time.now())
 
 
-        if self.episode == 0:
+        if self.episode == 4000:
             self.learning = False
-            #self.dl.save(self.save_path)
-            self.dl.load(self.load_path)
+            self.dl.save(self.save_path)
+            #self.dl.load(self.load_path)
 
         if self.learning:
             target_action = self.action
