@@ -6,7 +6,6 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan
-from kobuki_msgs.msg import BumperEvent
 from cv_bridge import CvBridge, CvBridgeError
 from deep_learning import *
 from skimage.transform import resize
@@ -40,7 +39,6 @@ class cource_following_learning_node:
         self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.callback)
         self.image_left_sub = rospy.Subscriber("/camera_left/rgb/image_raw", Image, self.callback_left_camera)
         self.image_right_sub = rospy.Subscriber("/camera_right/rgb/image_raw", Image, self.callback_right_camera)
-#        self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
         self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
         self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.callback_scan)
         self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
@@ -68,7 +66,7 @@ class cource_following_learning_node:
         self.action_list = ['Front', 'Right', 'Left']
         self.path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/result/'
         self.save_path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/model/'
-        self.load_path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/model/20201117_08:50:05/model.net'
+#        self.load_path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/model/20201117_08:50:05/model.net'
         self.previous_reset_time = 0
         self.start_time_s = rospy.get_time()
         self.correct_count = 0
@@ -166,7 +164,7 @@ class cource_following_learning_node:
         ros_time = str(rospy.Time.now())
 
 
-        if self.episode == 4000:
+        if self.episode == 8000:
             self.learning = False
             self.dl.save(self.save_path)
             #self.dl.load(self.load_path)
