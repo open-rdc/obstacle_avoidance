@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <!-- Arguments -->
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
@@ -5,6 +6,7 @@
   <arg name="open_rviz" default="true"/>
   <arg name="move_forward_only" default="false"/>
   <arg name="waypoints_file" default="/home/masaya/maps/waypoints_willow.yaml"/>
+  <arg name="cmd_vel_topic" default="/nav_vel"/>
   <arg name="dist_err" default="0.8"/>
 
   <!-- Turtlebot3 -->
@@ -22,7 +24,7 @@
   <include file="$(find turtlebot3_navigation)/launch/move_base.launch">
     <arg name="model" value="$(arg model)" />
     <arg name="move_forward_only" value="$(arg move_forward_only)"/>
-    <arg name="cmd_vel_topic" value="/nav_vel"/>
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
   </include>
 
   <node name="waypoints_nav" pkg="fulanghua_waypoints_nav" type="waypoints_nav" output="screen">
@@ -34,6 +36,6 @@
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
-          args="-d $(find turtlebot3_navigation)/rviz/turtlebot3_navigation.rviz"/>
+          args="-d $(find obstacle_avoidance)/rviz/turtlebot3_navigation.rviz"/>
   </group>
 </launch>
