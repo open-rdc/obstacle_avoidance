@@ -100,14 +100,13 @@ class cource_following_learning_node:
 		distance_list = []
 		pos = data.pose.pose.position
 
-		try:
-			for pose in self.path_pose.poses:
-				path = pose.pose.position
-				distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
-				distance_list.append(distance)
+		for pose in self.path_pose.poses:
+			path = pose.pose.position
+			distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
+			distance_list.append(distance)
+
+		if distance_list:	
 			self.min_distance = min(distance_list)
-		except NameError:
-			print("no path")
 
 	def callback_scan(self, scan):
 		points = []
@@ -163,8 +162,10 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 
-		if self.episode == 4000:
+		if self.episode == 1000:
 			self.learning = False
+            self.dl.save()
+
 
 		if self.learning:
 			target_action = self.action
@@ -230,7 +231,7 @@ class cource_following_learning_node:
 			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 				writer = csv.writer(f, lineterminator='\n')
 				writer.writerow(line)
-			self.vel.linear.x = 0.2
+			self.vel.linear.x = 0.4
 			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 
@@ -245,7 +246,7 @@ class cource_following_learning_node:
 			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 				writer = csv.writer(f, lineterminator='\n')
 				writer.writerow(line)
-			self.vel.linear.x = 0.2
+			self.vel.linear.x = 0.4
 			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 

@@ -1,4 +1,3 @@
-<?xml version="1.0"?>
 <launch>
     <include file="$(find orne_bringup)/launch/orne_gamma.launch">
     </include>

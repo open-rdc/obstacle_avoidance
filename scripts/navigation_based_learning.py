@@ -95,14 +95,13 @@ class cource_following_learning_node:
 		distance_list = []
 		pos = data.pose.pose.position
 
-		try:
-			for pose in self.path_pose.poses:
-				path = pose.pose.position
-				distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
-				distance_list.append(distance)
+		for pose in self.path_pose.poses:
+			path = pose.pose.position
+			distance = np.sqrt(abs((pos.x - path.x)**2 + (pos.y - path.y)**2))
+			distance_list.append(distance)
+
+		if distance_list:
 			self.min_distance = min(distance_list)
-		except NameError:
-			print("no path")
 
 	def callback_scan(self, scan):
 		points = []
@@ -133,8 +132,8 @@ class cource_following_learning_node:
 		if self.cv_right_image.size != 640 * 480 * 3:
 			return
 
-		if self.vel.linear.x == None:
-			return
+#		if self.vel.linear.x == None:
+#			return
 		img = resize(self.cv_image, (48, 64), mode='constant')
 		r, g, b = cv2.split(img)
 		imgobj = np.asanyarray([r,g,b])
@@ -150,7 +149,7 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 
-		if self.episode == 10000:
+		if self.episode == 15000:
 			self.learning = False
                         self.dl.save()
 
@@ -193,9 +192,9 @@ class cource_following_learning_node:
 				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
 				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
 			angle_error = abs(action - target_action)
-			if distance > 0.1:
+			if distance > 0.3:
 				self.select_dl = False
-			elif distance < 0.05:
+			elif distance < 0.1:
 				self.select_dl = True
 			if self.select_dl and self.episode >= 0:
 				target_action = action
@@ -218,7 +217,7 @@ class cource_following_learning_node:
 			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 				writer = csv.writer(f, lineterminator='\n')
 				writer.writerow(line)
-			self.vel.linear.x = 0.2
+			self.vel.linear.x = 0.4
 			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 
@@ -231,7 +230,7 @@ class cource_following_learning_node:
 			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 				writer = csv.writer(f, lineterminator='\n')
 				writer.writerow(line)
-			self.vel.linear.x = 0.2
+			self.vel.linear.x = 0.4
 			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 
