@@ -36,6 +36,7 @@ class cource_following_learning_node:
 		self.image_left_sub = rospy.Subscriber("/camera_left/image_raw", Image, self.callback_left_camera)
 		self.image_right_sub = rospy.Subscriber("/camera_right/image_raw", Image, self.callback_right_camera)
 		self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
+		self.joy_sub = rospy.Subscriber("/joy_vel", Twist, self.callback_joy)
 		self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.callback_scan)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
 		self.nav_pub = rospy.Publisher('/icart_mini/cmd_vel', Twist, queue_size=10)
@@ -44,6 +45,9 @@ class cource_following_learning_node:
 		self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
 		self.min_distance = 0.0
 		self.action = 0.0
+		self.joy = 0.0
+		self.joy_linear=0.0
+		self.joy_angular=0.0
 		self.reward = 0
 		self.episode = 0
 		self.count = 0
@@ -111,10 +115,13 @@ class cource_following_learning_node:
 				points.append((distance * math.cos(angle), distance * math.sin(angle)))
 			angle += scan.angle_increment
 
+	def callback_joy(self, data):
+		self.joy = data
+        	self.joy_linear = self.joy.linear.x 
+		self.joy_angular = self.joy.angular.z
 
 	def callback_vel(self, data):
 		self.vel = data
-# action
 		self.action = self.vel.angular.z
 
 	def callback_dl_training(self, data):
@@ -149,12 +156,16 @@ class cource_following_learning_node:
 		ros_time = str(rospy.Time.now())
 
 
-		if self.episode == 15000:
+		if self.episode ==5000:
 			self.learning = False
-                        self.dl.save()
+#self.dl.save()
+#			self.dl.load()
 
 		if self.learning:
-			target_action = self.action
+			if self.joy_linear > 0.0:
+            			target_action = self.joy_angular
+			else:
+            			target_action = self.action
 			distance = self.min_distance
 
                         """
@@ -185,20 +196,20 @@ class cource_following_learning_node:
 			if self.select_dl and self.episode >= 0:
 				target_action = 0
                         """
-                        
 			# proposed method (old)
 			action, loss = self.dl.act_and_trains(imgobj, target_action)
 			if abs(target_action) < 0.1:
 				action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
 				action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
 			angle_error = abs(action - target_action)
-			if distance > 0.3:
+            
+			if distance > 0.1:
 				self.select_dl = False
-			elif distance < 0.1:
+			elif distance < 0.05:
 				self.select_dl = True
-			if self.select_dl and self.episode >= 0:
-				target_action = action
-                        
+
+			if self.select_dl and self.episode >= 0 and self.joy_linear == 0.0:
+				target_action = action                        
 
 			"""
 			# follow line method
@@ -222,14 +233,18 @@ class cource_following_learning_node:
 			self.nav_pub.publish(self.vel)
 
 		else:
-			target_action = self.dl.act(imgobj)
-			distance = self.min_distance
-			print("TEST MODE: " + " angular:" + str(target_action) + ", distance: " + str(distance))
-			angle_error = abs(self.action - target_action)
-			line = [str(self.episode), "test", "0", str(angle_error), str(distance)]
-			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
-				writer = csv.writer(f, lineterminator='\n')
-				writer.writerow(line)
+			if self.joy_linear > 0.0:
+				target_action = self.joy_angular
+				action, loss = self.dl.act_and_trains(imgobj, target_action)
+            		else:
+				target_action = self.dl.act(imgobj)
+				distance = self.min_distance
+				print("TEST MODE: " + " angular:" + str(target_action) + ", distance: " + str(distance))
+				angle_error = abs(self.action - target_action)
+				line = [str(self.episode), "test", "0", str(angle_error), str(distance)]
+				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
+					writer = csv.writer(f, lineterminator='\n')
+					writer.writerow(line)
 			self.vel.linear.x = 0.4
 			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
