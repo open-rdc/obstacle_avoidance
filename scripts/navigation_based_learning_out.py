@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import roslib
 roslib.load_manifest('obstacle_avoidance')
@@ -27,8 +27,8 @@ class cource_following_learning_node:
 		self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
 		self.joy_sub = rospy.Subscriber("/joy_vel", Twist, self.callback_joy)
 		self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
-		self.nav_pub = rospy.Publisher('/icart_mini/cmd_vel', Twist, queue_size=10)
-		self.srv = rospy.Service('/training', SetBool, self.callback_dl)
+		self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+		self.srv = rospy.Service('/learn_out', SetBool, self.callback_dl)
 		self.action = 0.0
 		self.joy = Twist() 
 		self.joy_linear=0.0
@@ -39,7 +39,7 @@ class cource_following_learning_node:
 		self.learning = False
 		self.switch_mode = False
 		self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
-		self.path = '/home/orne/data/result/'
+		self.path = '/home/rdclab/data/result/'
 		self.start_time_s = rospy.get_time()
 		os.makedirs(self.path + self.start_time)
 
@@ -96,12 +96,12 @@ class cource_following_learning_node:
 			with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 				writer = csv.writer(f, lineterminator='\n')
 				writer.writerow(line)
-			self.vel.linear.x = 0.4
+			self.vel.linear.x = 0.2
 			self.vel.angular.z = target_action
 			self.nav_pub.publish(self.vel)
 
 		else:
-			if switch_mode:
+			if self.switch_mode:
 				target_action = self.dl.act(imgobj)
 				print("TEST MODE: " + " angular:" + str(target_action))
 				angle_error = abs(self.action - target_action)
@@ -109,11 +109,11 @@ class cource_following_learning_node:
 				with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
 					writer = csv.writer(f, lineterminator='\n')
 					writer.writerow(line)
-				self.vel.linear.x = 0.4
+				self.vel.linear.x = 0.2
 				self.vel.angular.z = target_action
 				self.nav_pub.publish(self.vel)
 			else:
-				self.vel.linear.x = 0.4
+				self.vel.linear.x = 0.2
 				self.vel.angular.z = self.action
 				self.nav_pub.publish(self.vel)
 
