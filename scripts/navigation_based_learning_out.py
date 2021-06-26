@@ -5,25 +5,16 @@ roslib.load_manifest('obstacle_avoidance')
 import rospy
 import cv2
 from sensor_msgs.msg import Image
-from sensor_msgs.msg import LaserScan
 from cv_bridge import CvBridge, CvBridgeError
 from deep_learning import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32, Int8
-from std_srvs.srv import Trigger
-from actionlib_msgs.msg import GoalStatusArray
-from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseWithCovarianceStamped
-from std_srvs.srv import Empty
 from std_srvs.srv import SetBool, SetBoolResponse
 import csv
 import os
 import time
 import copy
-import random
-import math
-import sys
 
 class cource_following_learning_node:
 	def __init__(self):
@@ -64,7 +55,7 @@ class cource_following_learning_node:
 
 	def callback_joy(self, data):
 		self.joy = data
-        	self.joy_linear = self.joy.linear.x 
+		self.joy_linear = self.joy.linear.x
 		self.joy_angular = self.joy.angular.z
 
 	def callback_vel(self, data):
@@ -96,14 +87,9 @@ class cource_following_learning_node:
 			self.learning= False
 
 		if self.learning:
-            target_action = self.joy_angular
-
-			# follow line method
+			target_action = self.joy_angular
 			action, loss = self.dl.act_and_trains(imgobj, target_action)
 			angle_error = abs(action - target_action)
-
-			# end method
-
 			print(" episode: " + str(self.episode) + ", loss: " + str(loss) + ", angle_error: " + str(angle_error))
 			self.episode += 1
 			line = [str(self.episode), "training", str(loss), str(angle_error)]

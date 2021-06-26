@@ -24,21 +24,16 @@ class Net(chainer.Chain):
 			conv2=L.Convolution2D(32, 64, ksize=3, stride=2, nobias=False, initialW=initializer),
 			conv3=L.Convolution2D(64, 64, ksize=3, stride=1, nobias=False, initialW=initializer),
 			fc4=L.Linear(960, 512, initialW=initializer),
-#            		fc5=L.Linear(512, 256, initialW=initializer),
-#            		lstm6=L.LSTM(256, 256),
-#            		fc7=L.Linear(256, 128, initialW=initializer),
-            		fc5=L.Linear(512, n_action, initialW=np.zeros((n_action, 512), dtype=np.int32))
+            fc5=L.Linear(512, n_action, initialW=np.zeros((n_action, 512), dtype=np.int32))
 			)
+
 	def __call__(self, x, test=False):
 		s = chainer.Variable(x)
 		h1 = F.relu(self.conv1(s))
 		h2 = F.relu(self.conv2(h1))
 		h3 = F.relu(self.conv3(h2))
 		h4 = F.relu(self.fc4(h3))
-#        	h5 = F.relu(self.fc5(h4))
-#        	h6 = F.relu(self.lstm6(h5))
-#        	h7 = F.relu(self.fc7(h6))
-        	h = self.fc5(h4)
+        h = self.fc5(h4)
 		return h
 
 class deep_learning:
@@ -78,7 +73,6 @@ class deep_learning:
 
 			self.net.cleargrads()
 			loss_train.backward()
-#			loss_train.unchain_backward()
 			self.optimizer.update()
 			
 			self.count += 1
@@ -104,9 +98,10 @@ class deep_learning:
 			return accuracy
 
 	def save(self):
-                        chainer.serializers.save_npz('/home/orne/orga_ws/src/obstacle_avoidance/net_models/cnn_test.net', self.net)
+		chainer.serializers.save_npz('/home/orne/orga_ws/src/obstacle_avoidance/net_models/cnn_test.net', self.net)
 
 	def load(self):
-			chainer.serializers.load_npz('/home/orne/orga_ws/src/obstacle_avoidance/net_models/cnn_test.net', self.net)
+		chainer.serializers.load_npz('/home/orne/orga_ws/src/obstacle_avoidance/net_models/cnn_test.net', self.net)
+
 if __name__ == '__main__':
         dl = deep_learning()
