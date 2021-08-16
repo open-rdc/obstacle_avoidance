@@ -39,22 +39,22 @@ class cource_following_learning_node:
         self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.callback)
         self.image_left_sub = rospy.Subscriber("/camera_left/rgb/image_raw", Image, self.callback_left_camera)
         self.image_right_sub = rospy.Subscriber("/camera_right/rgb/image_raw", Image, self.callback_right_camera)
-#        self.bumper_sub = rospy.Subscriber("/mobile_base/events/bumper", BumperEvent, self.callback_bumper)
         self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
-        self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.callback_scan)
         self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
         self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
         self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
         self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path)
         self.min_distance = 0.0
+	self.vel_angular = 0.0
         self.action = 0.0
-        self.reward = 0
         self.episode = 0
         self.count = 0
-        self.status = 0
-        self.loop_count = 0
-        self.success = 0.0
+        self.count_f = 0
+        self.count_l = 0
+        self.count_r = 0
+        self.loss = 0.0
+        self.angle_error = 0.0
         self.vel = Twist()
         self.path_pose = PoseArray()
         self.cv_image = np.zeros((480,640,3), np.uint8)
@@ -64,19 +64,16 @@ class cource_following_learning_node:
         self.collision = False
         self.select_dl = False
         self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
-        self.action_list = ['Front', 'Right', 'Left']
         self.path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/result/'
         self.save_path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/model/'
         self.load_path = roslib.packages.get_pkg_dir('obstacle_avoidance') + '/data/model/20201117_08:50:05/model.net'
         self.previous_reset_time = 0
         self.start_time_s = rospy.get_time()
-        self.correct_count = 0
-        self.incorrect_count = 0
         os.makedirs(self.path + self.start_time)
 
         with open(self.path + self.start_time + '/' +  'reward.csv', 'w') as f:
             writer = csv.writer(f, lineterminator='\n')
-            writer.writerow(['step', 'mode', 'loss', 'angle_error(rad)', 'distance(m)'])
+            writer.writerow(['step', 'mode', 'loss', 'angle_error(rad)', 'distance(m)','dataset(f)','dataset(l)','dataset(r)'])
 
     def callback(self, data):
         try:
@@ -111,21 +108,9 @@ class cource_following_learning_node:
         if distance_list:
             self.min_distance = min(distance_list)
 
-    def callback_scan(self, scan):
-        points = []
-        angle = scan.angle_min
-        for distance in scan.ranges:
-            if distance != float('inf') and not math.isnan(distance):
-                points.append((distance * math.cos(angle), distance * math.sin(angle)))
-            angle += scan.angle_increment
-
-            if distance <= 0.2:
-                self.collision = True
-
     def callback_vel(self, data):
         self.vel = data
-# action
-        self.action = self.vel.angular.z
+        self.vel_angular = self.vel.angular.z
 
     def callback_dl_training(self, data):
         resp = SetBoolResponse()
@@ -165,70 +150,42 @@ class cource_following_learning_node:
         ros_time = str(rospy.Time.now())
 
 
-        if self.episode == 4000:
+        if self.episode == 8000:
             self.learning = False
             #self.dl.save(self.save_path)
             #self.dl.load(self.load_path)
 
         if self.learning:
-            target_action = self.action
+            target_action = self.vel_angular
             distance = self.min_distance
-
-            """
-            # conventional method
-            if distance > 0.1:
-                self.select_dl = False
-            elif distance < 0.05:
-                self.select_dl = True
-            if self.select_dl and self.episode >= 0:
-                target_action = 0
-            action, loss = self.dl.act_and_trains(imgobj, target_action)
-            if abs(target_action) < 0.1:
-                action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
-                action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
-            angle_error = abs(action - target_action)
-            """
-            """
-            # proposed method (new)
-            action, loss = self.dl.act_and_trains(imgobj, target_action)
-            if abs(target_action) < 0.1:
-                action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
-                action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
-                angle_error = abs(action - target_action)
-            if distance > 0.1:
-                self.select_dl = False
-            elif distance < 0.05:
-                self.select_dl = True
-            if self.select_dl and self.episode >= 0:
-                target_action = 0
-            """
-
-            # proposed method (old)
-            action, loss = self.dl.act_and_trains(imgobj, target_action)
-            if abs(target_action) < 0.1:
-                action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
-                action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
-            angle_error = abs(action - target_action)
-            if distance > 0.1:
-                self.select_dl = False
-            elif distance < 0.05:
-                self.select_dl = True
-            if self.select_dl and self.episode >= 0:
-                target_action = action
             
-            """
-            # follow line method
-            action, loss = self.dl.act_and_trains(imgobj, target_action)
-            if abs(target_action) < 0.1:
-                action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
-                action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
-            angle_error = abs(action - target_action)
-            """
-            # end method
+            if self.angle_error > 0.05:
+            	self.action, self.loss = self.dl.act_and_trains(imgobj, target_action)
+            	if target_action > 0.2:
+			self.count_l += 1
+		elif target_action < -0.2:
+			self.count_r += 1
+		else:
+	                self.count_f += 1
 
-            print(" episode: " + str(self.episode) + ", loss: " + str(loss) + ", angle_error: " + str(angle_error) + ", distance: " + str(distance))
+            	if abs(target_action) < 0.1:
+                	action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
+                	action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
+                	self.count_l += 1
+                	self.count_r+= 1
+
+            self.angle_error = abs(self.action - target_action)
+            self.count = self.count_f + self.count_l + self.count_r
+            if distance > 0.1:
+                self.select_dl = False
+            elif distance < 0.05:
+                self.select_dl = True
+            if self.select_dl and self.episode >= 0:
+                target_action = self.action
+            
+            print(" episode: " + str(self.episode) + ", count: " + str(self.count) + ", loss: " + str(self.loss) + ", angle_error: " + str(self.angle_error) + ", distance: " + str(distance))
             self.episode += 1
-            line = [str(self.episode), "training", str(loss), str(angle_error), str(distance)]
+            line = [str(self.episode), "training", str(self.loss), str(self.angle_error), str(distance), str(self.count_f), str(self.count_l), str(self.count_r)]
             with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
                 writer = csv.writer(f, lineterminator='\n')
                 writer.writerow(line)

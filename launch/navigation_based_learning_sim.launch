@@ -15,11 +15,11 @@
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model mobile_base -x 0.0 -y 0.0 -z 0.0 -param robot_description" />
 
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="5 obstacle_avoidance navigation_based_learning.launch"
+        args="3 obstacle_avoidance navigation_based_learning.launch"
         name="timed_roslaunch" output="screen" />
 
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="10 obstacle_avoidance turtlebot3_navigation.launch model:=waffle map_file:=$(find obstacle_avoidance)/maps/willowgarage.yaml waypoints_file:=$(find obstacle_avoidance)/maps/willow_loop.yaml"
+        args="5 obstacle_avoidance turtlebot3_navigation.launch model:=waffle map_file:=$(find obstacle_avoidance)/maps/willowgarage.yaml waypoints_file:=/home/masaya/maps/willow_loop.yaml"
         name="timed_roslaunch2" >
   </node>
 </launch>

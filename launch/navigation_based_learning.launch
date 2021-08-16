@@ -1,7 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-	<node pkg="obstacle_avoidance" type="robot_move.py" name="robot_move">
-		<remap from="/mobile_base/commands/velocity" to="/cmd_vel" />
-	</node>
-	<node pkg="obstacle_avoidance" type="navigation_based_learning_node.py" name="navigation_based_learning_node" output="screen"/>
+	<node pkg="obstacle_avoidance" type="navigation_based_learning_proposed.py" name="navigation_based_learning_node" output="screen"/>
 </launch>
