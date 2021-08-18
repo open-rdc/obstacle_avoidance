@@ -51,6 +51,8 @@ class cource_following_learning_node:
         self.episode = 0
         self.count = 0
         self.count_f = 0
+	self.count_ml = 0
+	self.count_mr = 0
         self.count_l = 0
         self.count_r = 0
         self.loss = 0.0
@@ -73,7 +75,7 @@ class cource_following_learning_node:
 
         with open(self.path + self.start_time + '/' +  'reward.csv', 'w') as f:
             writer = csv.writer(f, lineterminator='\n')
-            writer.writerow(['step', 'mode', 'loss', 'angle_error(rad)', 'distance(m)','dataset(f)','dataset(l)','dataset(r)'])
+            writer.writerow(['step', 'mode', 'loss', 'angle_error(rad)', 'distance(m)','dataset(f)','dataset(ml)','dataset(l)','dataset(mr)','dataset(r)'])
 
     def callback(self, data):
         try:
@@ -164,14 +166,16 @@ class cource_following_learning_node:
 		self.count_l += 1
 	    elif target_action < -0.2:
 		self.count_r += 1
+	    elif target_action > 0.1:
+		self.count_ml += 1
+	    elif target_action < -0.1:
+		self.count_mr += 1
 	    else:
 	        self.count_f += 1
 
             if abs(target_action) < 0.1:
                	action_left,  loss_left  = self.dl.act_and_trains(imgobj_left, target_action - 0.2)
                	action_right, loss_right = self.dl.act_and_trains(imgobj_right, target_action + 0.2)
-               	self.count_l += 1
-               	self.count_r+= 1
 
             self.angle_error = abs(self.action - target_action)
             self.count = self.count_f + self.count_l + self.count_r
@@ -184,7 +188,7 @@ class cource_following_learning_node:
             
             print(" episode: " + str(self.episode) + ", count: " + str(self.count) + ", loss: " + str(self.loss) + ", angle_error: " + str(self.angle_error) + ", distance: " + str(distance))
             self.episode += 1
-            line = [str(self.episode), "training", str(self.loss), str(self.angle_error), str(distance), str(self.count_f), str(self.count_l), str(self.count_r)]
+            line = [str(self.episode), "training", str(self.loss), str(self.angle_error), str(distance), str(self.count_f),  str(self.count_ml),  str(self.count_l), str(self.count_mr), str(self.count_r)]
             with open(self.path + self.start_time + '/' + 'reward.csv', 'a') as f:
                 writer = csv.writer(f, lineterminator='\n')
                 writer.writerow(line)
